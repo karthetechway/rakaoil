@@ -39,7 +39,7 @@ export default function Sidebar({ active, onNav }) {
         </button>
       </nav>
 
-      <div className="sidebar-footer">
+      <div className="sidebar-footer desktop-only">
         <button
           className="nav-item"
           style={{ width: '100%', color: 'var(--text-muted)' }}

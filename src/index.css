@@ -564,7 +564,27 @@ tbody tr:hover { background: var(--cream-dark); }
   .main-content {
     margin-left: 0;
     padding: 1rem;
-    padding-bottom: 80px; /* Space for bottom nav */
+    padding-top: 80px; /* Space for top mobile header */
+    padding-bottom: 84px; /* Space for bottom nav */
+  }
+
+  .mobile-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 64px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 15px rgba(60,36,21,0.04);
+  }
+  .mobile-header h1 { 
+    font-size: 1.2rem; 
+    color: var(--brown-dark); 
+    letter-spacing: -0.2px; 
+    font-weight: 600;
   }
 
   .billing-layout { grid-template-columns: 1fr; gap: 1rem; }

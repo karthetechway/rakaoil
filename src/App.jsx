@@ -35,6 +35,11 @@ function AppShell() {
 
   return (
     <div className="app-layout">
+      {/* Mobile Top Branding */}
+      <header className="mobile-header mobile-only">
+        <h1>{import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'}</h1>
+      </header>
+      
       <Sidebar active={page} onNav={setPage} />
       <main className="main-content">
         <PageComponent />
