@@ -92,11 +92,11 @@ export default function Reports() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="reports-grid">
         {/* Daily breakdown */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '.9rem 1.1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>
-            Daily Sales
+          <div style={{ padding: '.9rem 1.1rem', borderBottom: '1px solid var(--border)', fontWeight: 600 }}>
+            Daily Sales Breakdown
           </div>
           {loading
             ? <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>
@@ -128,8 +128,8 @@ export default function Reports() {
 
         {/* Top products */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '.9rem 1.1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>
-            Top Products
+          <div style={{ padding: '.9rem 1.1rem', borderBottom: '1px solid var(--border)', fontWeight: 600 }}>
+            Top Products (Revenue)
           </div>
           <div className="table-wrap">
             <table>

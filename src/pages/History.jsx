@@ -172,7 +172,7 @@ export default function History() {
       </div>
 
       {/* Day summary */}
-      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', marginBottom: '1.25rem' }}>
+      <div className="stat-grid">
         <div className="stat-card">
           <div className="stat-label">Day Total</div>
           <div className="stat-val">₹{dayTotal.toLocaleString('en-IN')}</div>
@@ -193,126 +193,66 @@ export default function History() {
         ) : bills.length === 0 ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No bills for this date.</div>
         ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Bill #</th>
-                  <th>Time</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Payment</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th style={{ minWidth: 200 }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bills.map(b => (
-                  <React.Fragment key={b.id}>
-                    {/* ── Bill row ── */}
-                    <tr style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === b.id ? null : b.id)}>
-                      <td><strong>#{b.bill_number}</strong></td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{format(new Date(b.created_at), 'hh:mm a')}</td>
-                      <td>{b.customers?.name || b.customers?.phone || '—'}</td>
-                      <td style={{ color: 'var(--text-muted)' }}>{b.bill_items?.length ?? 0} items</td>
-                      <td><span className="badge badge-gold">{b.payment_mode.toUpperCase()}</span></td>
-                      <td><strong>₹{Number(b.total).toFixed(2)}</strong></td>
-                      <td>
+            <div className="admin-list">
+              {bills.map(b => (
+                <div key={b.id} className="admin-item" 
+                     onClick={() => setExpanded(expanded === b.id ? null : b.id)}
+                     style={{ cursor: 'pointer' }}>
+                  
+                  <div className="ai-main">
+                    <div>
+                      <div className="pname">Bill #{b.bill_number}</div>
+                      <div className="ptamil">{format(new Date(b.created_at), 'hh:mm a')} • {b.customers?.name || 'Walk-in'}</div>
+                      <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
                         <span className={`badge ${b.status === 'paid' ? 'badge-green' : 'badge-red'}`}>
-                          {b.status}
+                          {b.status.toUpperCase()}
                         </span>
-                      </td>
-                      <td onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                          {/* Print */}
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={e => handlePrint(e, b)}
-                            title="Print receipt"
-                            disabled={actioning === b.id}
-                            style={{ fontSize: 12 }}
-                          >
-                            🖨️ Print
-                          </button>
+                        <span className="badge badge-gold">{b.payment_mode.toUpperCase()}</span>
+                      </div>
+                    </div>
+                    <div className="ai-price">
+                      <span>₹{Number(b.total).toFixed(2)}</span>
+                    </div>
+                  </div>
 
-                          {/* Save PDF */}
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={e => handleSavePDF(e, b)}
-                            title="Save as PDF"
-                            disabled={actioning === b.id}
-                            style={{ fontSize: 12 }}
-                          >
-                            📄 PDF
-                          </button>
+                  {expanded === b.id && (
+                    <div className="ai-details" style={{ padding: '1rem', background: 'var(--cream)', borderRadius: 8, marginTop: 4 }}>
+                       <div style={{ fontSize: 13, marginBottom: 8, fontWeight: 600 }}>Items Breakdown:</div>
+                       {(b.bill_items || []).map(i => (
+                         <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                            <span>{i.product_name} ({i.size}) x {i.quantity}</span>
+                            <span>₹{i.line_total}</span>
+                         </div>
+                       ))}
+                       {Number(b.discount) > 0 && (
+                         <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 4, textAlign: 'right', fontSize: 12 }}>
+                           Discount: -₹{b.discount}
+                         </div>
+                       )}
+                    </div>
+                  )}
 
-                          {/* Cancel (only for paid bills) */}
-                          {b.status === 'paid' && (
-                            <button
-                              className="btn btn-sm"
-                              onClick={e => handleCancel(e, b)}
-                              disabled={actioning === b.id}
-                              style={{ fontSize: 12, background: 'var(--cream-dark)', color: 'var(--text-mid)', border: '1px solid var(--border)' }}
-                            >
-                              {actioning === b.id ? '…' : 'Cancel'}
-                            </button>
-                          )}
-
-                          {/* Delete */}
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={e => handleDelete(e, b)}
-                            disabled={actioning === b.id}
-                            title="Permanently delete this bill"
-                            style={{ fontSize: 12 }}
-                          >
-                            {actioning === b.id ? '…' : '🗑️ Delete'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* ── Expanded items ── */}
-                    {expanded === b.id && (
-                      <tr>
-                        <td colSpan={8} style={{ background: 'var(--cream)', padding: '0 1rem 1rem' }}>
-                          <table style={{ marginTop: 8 }}>
-                            <thead>
-                              <tr>
-                                <th>Product</th><th>Size</th><th>Qty</th><th>Unit Price</th><th>Total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(b.bill_items || []).map(i => (
-                                <tr key={i.id}>
-                                  <td>{i.product_name}</td>
-                                  <td>{i.size}</td>
-                                  <td>{i.quantity}</td>
-                                  <td>₹{i.unit_price}</td>
-                                  <td>₹{i.line_total}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          {Number(b.discount) > 0 && (
-                            <div style={{ textAlign: 'right', marginTop: 6, fontSize: 13, color: 'var(--text-muted)' }}>
-                              Discount: ₹{b.discount} &nbsp;|&nbsp; Total Paid: ₹{b.total}
-                            </div>
-                          )}
-                          {b.notes && (
-                            <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text-muted)' }}>
-                              Note: {b.notes}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  <div className="ai-actions" onClick={e => e.stopPropagation()}>
+                    <div className="ai-btns" style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      <button className="btn btn-outline btn-sm" onClick={e => handlePrint(e, b)} disabled={actioning === b.id}>
+                        🖨️ Print
+                      </button>
+                      <button className="btn btn-outline btn-sm" onClick={e => handleSavePDF(e, b)} disabled={actioning === b.id}>
+                        📄 PDF
+                      </button>
+                      {b.status === 'paid' && (
+                        <button className="btn btn-outline btn-sm" onClick={e => handleCancel(e, b)} disabled={actioning === b.id}>
+                          Cancel
+                        </button>
+                      )}
+                      <button className="btn btn-danger btn-sm" onClick={e => handleDelete(e, b)} disabled={actioning === b.id}>
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
         )}
       </div>
     </div>
