@@ -4,6 +4,7 @@
 const SHOP_NAME = () => import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
 const SHOP_ADDRESS = () => import.meta.env.VITE_SHOP_ADDRESS || ''
 const SHOP_PHONE = () => import.meta.env.VITE_SHOP_PHONE || ''
+const SHOP_EMAIL = () => import.meta.env.VITE_SHOP_EMAIL || ''
 const SHOP_GST = () => import.meta.env.VITE_SHOP_GST || ''
 
 function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 0, total }) {
@@ -14,7 +15,7 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
   const dateStr = now.toLocaleDateString('en-IN') + ' ' +
     now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
 
-  const itemRows = items.map(item => `
+  const itemRows = items.map((item, index) => `
     <div class="item">
       <div class="item-row">
         <span class="item-name">${item.product_name} — ${item.size}</span>
@@ -22,6 +23,7 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
       </div>
       <div class="item-sub">${item.quantity} pcs &times; &#8377;${Number(item.unit_price).toFixed(2)}</div>
     </div>
+    ${index < items.length - 1 ? '<div class="dash" style="margin: 4px 0; border-top-style: dotted; opacity: 0.3;"></div>' : ''}
   `).join('')
 
   const discountRows = safeDiscount > 0 ? `
@@ -69,6 +71,7 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
     <div class="shop-name">${SHOP_NAME()}</div>
     ${SHOP_ADDRESS() ? `<div>${SHOP_ADDRESS()}</div>` : ''}
     ${SHOP_PHONE() ? `<div>Ph: ${SHOP_PHONE()}</div>` : ''}
+    ${SHOP_EMAIL() ? `<div>Email: ${SHOP_EMAIL()}</div>` : ''}
     ${SHOP_GST() ? `<div>${SHOP_GST()}</div>` : ''}
   </div>
 

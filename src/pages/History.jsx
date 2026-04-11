@@ -51,16 +51,19 @@ export default function History() {
     const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'Chekku Oil Shop'
     const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || ''
     const SHOP_PHONE   = import.meta.env.VITE_SHOP_PHONE   || ''
+    const SHOP_EMAIL   = import.meta.env.VITE_SHOP_EMAIL   || ''
     const SHOP_GST     = import.meta.env.VITE_SHOP_GST     || ''
 
-    const itemRows = items.map(i => `
+    const itemRows = items.map((i, idx) => `
       <div class="item">
         <div class="item-row">
           <span class="item-name">${i.product_name} — ${i.size}</span>
           <span class="item-amt">&#8377;${Number(i.line_total).toFixed(2)}</span>
         </div>
         <div class="item-sub">${i.quantity} pcs &times; &#8377;${Number(i.unit_price).toFixed(2)}</div>
-      </div>`).join('')
+      </div>
+      ${idx < items.length - 1 ? '<div class="dash" style="margin: 4px 0; border-top-style: dotted; opacity: 0.3;"></div>' : ''}
+    `).join('')
 
     const discRows = safeDiscount > 0 ? `
       <div class="tot-row"><span>Subtotal</span><span>&#8377;${safeSubtotal.toFixed(2)}</span></div>
@@ -90,6 +93,7 @@ export default function History() {
         <div class="shop-name">${SHOP_NAME}</div>
         ${SHOP_ADDRESS ? `<div>${SHOP_ADDRESS}</div>` : ''}
         ${SHOP_PHONE   ? `<div>Ph: ${SHOP_PHONE}</div>` : ''}
+        ${SHOP_EMAIL   ? `<div>Email: ${SHOP_EMAIL}</div>` : ''}
         ${SHOP_GST     ? `<div>${SHOP_GST}</div>` : ''}
       </div>
       <div class="dash"></div>

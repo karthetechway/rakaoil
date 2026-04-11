@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'Sri Murugan Chekku Oil'
 const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || 'Salem, Tamil Nadu'
 const SHOP_PHONE   = import.meta.env.VITE_SHOP_PHONE   || ''
+const SHOP_EMAIL   = import.meta.env.VITE_SHOP_EMAIL   || ''
 const SHOP_GST     = import.meta.env.VITE_SHOP_GST     || ''
 
 // Receipt is always in the DOM but hidden via CSS.
@@ -37,6 +38,7 @@ const Receipt = forwardRef(({ bill, items = [], customer, paymentMode, discount 
           <div style={{ fontWeight: 'bold', fontSize: 15 }}>{SHOP_NAME}</div>
           {SHOP_ADDRESS && <div style={{ fontSize: 12 }}>{SHOP_ADDRESS}</div>}
           {SHOP_PHONE   && <div style={{ fontSize: 12 }}>Ph: {SHOP_PHONE}</div>}
+          {SHOP_EMAIL   && <div style={{ fontSize: 12 }}>Email: {SHOP_EMAIL}</div>}
           {SHOP_GST     && <div style={{ fontSize: 12 }}>{SHOP_GST}</div>}
         </div>
 
@@ -73,6 +75,7 @@ const Receipt = forwardRef(({ bill, items = [], customer, paymentMode, discount 
             <div style={{ fontSize: 11, color: '#444', paddingLeft: 4 }}>
               {item.quantity} pcs × ₹{Number(item.unit_price).toFixed(2)}
             </div>
+            {i < items.length - 1 && <div style={{ borderTop: '1px dotted #ccc', margin: '4px 0' }} />}
           </div>
         ))}
 

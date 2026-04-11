@@ -8,6 +8,7 @@ const CATS = ['All', 'Oils', 'Ghee', 'Dal & Sugar']
 const SHOP_NAME = import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
 const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || ''
 const SHOP_PHONE = import.meta.env.VITE_SHOP_PHONE || ''
+const SHOP_EMAIL = import.meta.env.VITE_SHOP_EMAIL || ''
 
 export default function Billing() {
   const { products, loading } = useProducts()
@@ -154,6 +155,7 @@ export default function Billing() {
       `*${SHOP_NAME}*`,
       SHOP_ADDRESS || null,
       SHOP_PHONE ? `Ph: ${SHOP_PHONE}` : null,
+      SHOP_EMAIL ? `Email: ${SHOP_EMAIL}` : null,
       '',
       `Bill No : *#${bill.bill_number}*`,
       `Date    : ${new Date().toLocaleDateString('en-IN')}`,
