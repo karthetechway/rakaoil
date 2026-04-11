@@ -50,8 +50,10 @@ export default function Login() {
         </form>
 
         <footer className="login-footer">
-          <p>© {new Date().getFullYear()} J Oil Mill</p>
-          <p style={{ marginTop: 4 }}>Sivakasi, Tamil Nadu</p>
+          <p>© {new Date().getFullYear()} J Oil Mill • Sivakasi, TN</p>
+          <p style={{ marginTop: 6, opacity: 0.8, fontSize: 11 }}>
+            Designed and Developed by <strong>Techway Solution</strong>
+          </p>
         </footer>
       </div>
     </div>

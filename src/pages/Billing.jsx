@@ -32,8 +32,12 @@ export default function Billing() {
 
   // ── Products filter & group ────────────────────────────────
   const filtered = products.filter(p => {
-    const matchCat = cat === 'All' || p.category === cat
-    const q = search.toLowerCase()
+    // Robust category matching (case-insensitive & trimmed)
+    const pCat = (p.category || '').toLowerCase().trim()
+    const sCat = (cat || 'All').toLowerCase().trim()
+    const matchCat = sCat === 'all' || pCat === sCat
+    
+    const q = (search || '').toLowerCase().trim()
     return matchCat && (!q || p.name.toLowerCase().includes(q) || (p.name_tamil || '').includes(q))
   })
   const grouped = filtered.reduce((acc, p) => {

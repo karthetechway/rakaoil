@@ -408,13 +408,34 @@ tbody tr:hover { background: var(--cream-dark); }
 
 /* product grid */
 .prod-search { padding: .9rem 1.1rem; border-bottom: 1px solid var(--border); }
-.cat-strip { display: flex; gap: 6px; padding: .7rem 1.1rem; overflow-x: auto; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.cat-chip {
-  flex-shrink: 0; padding: 4px 14px; border-radius: 99px;
-  font-size: 12px; border: 1px solid var(--border);
-  background: transparent; color: var(--text-mid); cursor: pointer;
+.cat-strip { 
+  display: flex; 
+  gap: 8px; 
+  padding: 1rem 1.25rem; 
+  overflow-x: auto; 
+  border-bottom: 1px solid var(--border); 
+  flex-shrink: 0;
+  background: #fff;
 }
-.cat-chip.active { background: var(--brown); color: var(--cream); border-color: var(--brown); }
+.cat-chip {
+  flex-shrink: 0; 
+  padding: 6px 18px; 
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #fff; 
+  color: var(--text-mid); 
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cat-chip:hover { border-color: var(--gold); color: var(--gold); }
+.cat-chip.active { 
+  background: var(--brown); 
+  color: #fff; 
+  border-color: var(--brown);
+  box-shadow: 0 4px 12px rgba(124, 92, 62, 0.25);
+}
 /* product list rows */
 .products-list { display: flex; flex-direction: column; gap: 8px; padding: 1rem 1.1rem; }
 .product-row {

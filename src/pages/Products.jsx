@@ -83,12 +83,18 @@ function ProductsContent() {
     setAddLoading(true)
     try {
       const maxSort = products.length ? Math.max(...products.map(p => p.sort_order || 0)) : 0
+      
+      // Normalize data for consistent filtering
+      const finalName = sanitiseText(form.name)
+      const finalTamil = sanitiseText(form.name_tamil) || null
+      const finalCat = form.category.trim() // Preserves case from the CATEGORIES constant
+      
       await supabase.from('products').insert({
-        name:       sanitiseText(form.name),
-        name_tamil: sanitiseText(form.name_tamil) || null,
-        category:   form.category,           // enum-constrained, no sanitise needed
+        name:       finalName,
+        name_tamil: finalTamil,
+        category:   finalCat,
         size:       sanitiseText(form.size),
-        unit:       form.unit,               // select dropdown, safe
+        unit:       form.unit,
         price:      sanitisePrice(form.price),
         active:     true,
         sort_order: maxSort + 1,

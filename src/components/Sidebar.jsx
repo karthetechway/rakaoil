@@ -39,14 +39,17 @@ export default function Sidebar({ active, onNav }) {
         </button>
       </nav>
 
-      <div className="sidebar-footer desktop-only">
+      <div className="sidebar-footer">
         <button
           className="nav-item"
-          style={{ width: '100%', color: 'rgba(237,217,190,0.5)' }}
+          style={{ width: '100%', color: 'var(--text-muted)' }}
           onClick={signOut}
         >
           <LogoutIcon /> <span>Sign Out</span>
         </button>
+        <div style={{ padding: '0 1.25rem', marginTop: 12, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', opacity: 0.7 }}>
+          Developed by <strong>Techway Solution</strong>
+        </div>
       </div>
     </aside>
   )
