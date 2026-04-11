@@ -262,11 +262,8 @@ export default function Products() {
     <div className="page">
       <div className="page-header">
         <h2>Products & Prices</h2>
-        <span className="badge badge-gold" style={{ fontSize: 12 }}>🔐 PIN Protected</span>
       </div>
-      <AdminPinGate title="Products Admin Access">
-        <ProductsContent />
-      </AdminPinGate>
+      <ProductsContent />
     </div>
   )
 }
