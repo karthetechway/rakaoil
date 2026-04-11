@@ -20,13 +20,13 @@ export default function Login() {
       <div className="login-card">
         {/* Branding Slot: User can add public/branding.png */}
         <div className="branding-slot">
-          <img src="branding.png" alt="J Oil Mill Branding" 
-               onError={(e) => { e.target.style.display = 'none' }} 
-               className="brand-img" />
+          <img src="branding.png" alt="J Oil Mill Branding"
+            onError={(e) => { e.target.style.display = 'none' }}
+            className="brand-img" />
           <div className="brand-fallback">
-             <div style={{ fontSize: 48, marginBottom: 12 }}>🫙</div>
-             <h1>J Oil Mill</h1>
-             <p>Billing Software</p>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🫙</div>
+            <h1>J Oil Mill</h1>
+            <p>Billing Software</p>
           </div>
         </div>
 
@@ -41,9 +41,9 @@ export default function Login() {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" required />
           </div>
-          
+
           {error && <div className="error-box">{error}</div>}
-          
+
           <button className="btn btn-primary btn-block" disabled={loading}>
             {loading ? 'Authenticating…' : 'Sign In'}
           </button>
@@ -51,7 +51,7 @@ export default function Login() {
 
         <footer className="login-footer">
           <p>© {new Date().getFullYear()} J Oil Mill</p>
-          <p style={{ marginTop: 4 }}>Vellore, Tamil Nadu</p>
+          <p style={{ marginTop: 4 }}>Sivakasi, Tamil Nadu</p>
         </footer>
       </div>
     </div>

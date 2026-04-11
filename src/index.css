@@ -511,3 +511,59 @@ tbody tr:hover { background: var(--cream-dark); }
   .ai-btns { flex-direction: row; }
   .ai-btns button { flex: 1; }
 }
+/* ── Login Experience ───────────────────────────────────────── */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f5f2;
+  padding: 1.5rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: var(--r-lg);
+  box-shadow: 0 10px 40px rgba(60,36,21,0.08);
+  overflow: hidden;
+}
+
+.branding-slot {
+  padding: 2.5rem 2rem;
+  text-align: center;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-img {
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+
+.brand-fallback h1 { font-size: 1.5rem; color: var(--brown-dark); }
+.brand-fallback p { font-size: 14px; color: var(--text-muted); }
+
+.login-form { padding: 2.5rem 2rem; }
+.form-group { margin-bottom: 1.25rem; }
+.form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--text-mid); }
+.form-group input { width: 100%; padding: 10px 14px; border-radius: var(--r-sm); border: 1.5px solid var(--border); font-size: 14px; }
+.form-group input:focus { border-color: var(--gold); outline: none; }
+
+.error-box {
+  background: #fef2f2; border: 1px solid #fee2e2; color: var(--red);
+  padding: 10px; border-radius: var(--r-sm); margin-bottom: 1rem; font-size: 13px;
+}
+
+.btn-block { width: 100%; padding: 12px; font-size: 15px; }
+
+.login-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
