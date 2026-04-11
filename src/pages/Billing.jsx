@@ -27,6 +27,8 @@ export default function Billing() {
   const [payMode, setPayMode] = useState('cash')
   const [discount, setDiscount] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [lastAddedId, setLastAddedId] = useState(null)
 
   // ── Products filter & group ────────────────────────────────
   const filtered = products.filter(p => {
@@ -41,7 +43,11 @@ export default function Billing() {
   }, {})
 
   // ── Cart ───────────────────────────────────────────────────
-  const addItem = p => setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
+  const addItem = p => {
+    setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
+    setLastAddedId(p.id)
+    setTimeout(() => setLastAddedId(null), 200)
+  }
   const changeQty = (id, d) => setCart(c => {
     const q = (c[id] || 0) + d
     if (q <= 0) { const n = { ...c }; delete n[id]; return n }
@@ -59,6 +65,7 @@ export default function Billing() {
     return { product_id: p.id, product_name: p.name, size: p.size, quantity: qty, unit_price: p.price, line_total: p.price * qty }
   }).filter(Boolean)
 
+  const totalItems = cartItems.reduce((s, i) => s + i.quantity, 0)
   const subtotal = cartItems.reduce((s, i) => s + i.line_total, 0)
   const total = Math.max(0, subtotal - Number(discount))
 
@@ -112,6 +119,7 @@ export default function Billing() {
       discount: discSnap,
     })
     clearAll()
+    setIsDrawerOpen(false)
     return { bill, itemsSnap, custSnap, discSnap, totalSnap, paySnap }
   }
 
@@ -192,8 +200,16 @@ export default function Billing() {
                 <div className="pname">{name}</div>
                 <div className="ptamil">{items[0].name_tamil}</div>
                 {items.map(p => (
-                  <button key={p.id} className="size-btn" onClick={() => addItem(p)}>
-                    <span>{p.size}</span><span>₹{p.price}</span>
+                  <button
+                    key={p.id}
+                    className={`size-btn${cart[p.id] ? ' has-items' : ''}${lastAddedId === p.id ? ' animate-pulse' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); addItem(p) }}
+                  >
+                    <span>{p.size}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      ₹{p.price}
+                      {cart[p.id] && <span className="qty-tag">{cart[p.id]}</span>}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -207,11 +223,11 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* RIGHT: Bill */}
-      <div className="bill-panel">
+      {/* RIGHT: Bill (Desktop) */}
+      <div className="bill-panel checkout desktop-only">
         <div className="bill-panel-head">
           <h3>Current Bill</h3>
-          <span className="badge badge-brown">{cartItems.length} items</span>
+          <span className="badge badge-brown">{totalItems} items</span>
         </div>
 
         {/* Customer */}
@@ -272,41 +288,215 @@ export default function Billing() {
 
         {/* Totals */}
         <div className="bill-panel-foot">
-          <div className="tot-row">
-            <span style={{ color: 'var(--text-muted)' }}>Subtotal</span>
-            <span className="val">₹{subtotal.toFixed(2)}</span>
-          </div>
-          <div className="tot-row" style={{ alignItems: 'center' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Discount (₹)</span>
-            <input type="number" min="0" value={discount} onChange={e => setDiscount(e.target.value)}
-              style={{ width: 70, textAlign: 'right', padding: '3px 6px', fontSize: 13 }}
-            />
-          </div>
-          <div className="tot-row grand-row">
-            <span>Total</span><span>₹{total.toFixed(2)}</span>
-          </div>
+      {renderBillTotals()}
+      {renderPaymentButtons()}
+      {renderActionButtons()}
+    </div>
+  )
 
-          <div className="pay-btns" style={{ marginTop: 10 }}>
-            {['cash', 'upi', 'card'].map(m => (
-              <button key={m} className={`pay-btn${payMode === m ? ' active' : ''}`} onClick={() => setPayMode(m)}>
-                {m.toUpperCase()}
-              </button>
+  // ── Render Helpers ─────────────────────────────────────────
+  function renderBillTotals() {
+    return (
+      <div className="tot-rows">
+        <div className="tot-row">
+          <span style={{ color: 'var(--text-muted)' }}>Subtotal</span>
+          <span className="val">₹{subtotal.toFixed(2)}</span>
+        </div>
+        <div className="tot-row" style={{ alignItems: 'center' }}>
+          <span style={{ color: 'var(--text-muted)' }}>Discount (₹)</span>
+          <input type="number" min="0" value={discount} onChange={e => setDiscount(e.target.value)}
+            style={{ width: 70, textAlign: 'right', padding: '3px 6px', fontSize: 13 }}
+          />
+        </div>
+        <div className="tot-row grand-row">
+          <span>Total</span><span>₹{total.toFixed(2)}</span>
+        </div>
+      </div>
+    )
+  }
+
+  function renderPaymentButtons() {
+    return (
+      <div className="pay-btns" style={{ marginTop: 10 }}>
+        {['cash', 'upi', 'card'].map(m => (
+          <button key={m} className={`pay-btn${payMode === m ? ' active' : ''}`} onClick={() => setPayMode(m)}>
+            {m.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  function renderActionButtons() {
+    return (
+      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+        <button className="btn btn-outline btn-sm" onClick={clearAll} disabled={saving} style={{ flex: 1 }}>
+          Clear
+        </button>
+        <button className="btn btn-whatsapp" onClick={handleWhatsApp} disabled={saving || !cartItems.length} style={{ flex: 1.5 }}>
+          {saving ? '…' : '💬 WhatsApp'}
+        </button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving || !cartItems.length} style={{ flex: 2 }}>
+          {saving ? 'Saving…' : 'Save & Print'}
+        </button>
+      </div>
+    )
+  }
+
+  function renderCustomerForm() {
+    return (
+      <div style={{ padding: '.75rem 1.1rem', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            Mobile Number <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span>
+            {lookingUp && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>searching…</span>}
+            {returning && !lookingUp && (
+              <span style={{ fontSize: 11, background: '#e8f5ec', color: '#3a7d51', padding: '1px 8px', borderRadius: 99 }}>
+                Returning customer ✓
+              </span>
+            )}
+          </label>
+          <input type="tel" value={custPhone}
+            onChange={e => { setCustPhone(e.target.value); setPhoneError('') }}
+            placeholder="10-digit mobile number"
+            style={{ borderColor: phoneError ? 'var(--red)' : undefined }}
+          />
+          {phoneError && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{phoneError}</div>}
+        </div>
+        <div>
+          <label style={{ marginBottom: 4 }}>
+            Customer Name <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span>
+          </label>
+          <input type="text" value={custName}
+            onChange={e => { setCustName(e.target.value); setNameError('') }}
+            placeholder="Full name"
+            style={{ borderColor: nameError ? 'var(--red)' : undefined }}
+          />
+          {nameError && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{nameError}</div>}
+        </div>
+      </div>
+    )
+  }
+
+  function renderCartItems() {
+    return (
+      <div className="bill-panel-body">
+        {!cartItems.length
+          ? <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)', fontSize: 13 }}>
+            Tap a product size on the left to add
+          </div>
+          : cartItems.map(item => (
+            <div key={item.product_id} className="bill-item">
+              <div>
+                <div className="bi-name">{item.product_name}</div>
+                <div className="bi-size">{item.size} × ₹{item.unit_price}</div>
+              </div>
+              <div className="qty-ctrl">
+                <button className="qty-btn" onClick={() => changeQty(item.product_id, -1)}>−</button>
+                <span className="qty-num">{item.quantity}</span>
+                <button className="qty-btn" onClick={() => changeQty(item.product_id, +1)}>+</button>
+              </div>
+              <div className="bi-price">₹{item.line_total.toFixed(2)}</div>
+              <button className="del-btn" onClick={() => removeItem(item.product_id)}>×</button>
+            </div>
+          ))
+        }
+      </div>
+    )
+  }
+
+  return (
+    <div className="billing-layout">
+      {/* LEFT: Products */}
+      <div className="bill-panel">
+        <div className="prod-search">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products or Tamil name…" />
+        </div>
+        <div className="cat-strip">
+          {CATS.map(c => (
+            <button key={c} className={`cat-chip${cat === c ? ' active' : ''}`} onClick={() => setCat(c)}>{c}</button>
+          ))}
+        </div>
+        <div className="bill-panel-body">
+          <div className="products-grid">
+            {Object.entries(grouped).map(([name, items]) => (
+              <div key={name} className="product-card">
+                <div className="pname">{name}</div>
+                <div className="ptamil">{items[0].name_tamil}</div>
+                {items.map(p => (
+                  <button
+                    key={p.id}
+                    className={`size-btn${cart[p.id] ? ' has-items' : ''}${lastAddedId === p.id ? ' animate-pulse' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); addItem(p) }}
+                  >
+                    <span>{p.size}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      ₹{p.price}
+                      {cart[p.id] && <span className="qty-tag">{cart[p.id]}</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
             ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-            <button className="btn btn-outline btn-sm" onClick={clearAll} disabled={saving} style={{ flex: 1 }}>
-              Clear
-            </button>
-            <button className="btn btn-whatsapp" onClick={handleWhatsApp} disabled={saving || !cartItems.length} style={{ flex: 1.5 }}>
-              {saving ? '…' : '💬 WhatsApp'}
-            </button>
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving || !cartItems.length} style={{ flex: 2 }}>
-              {saving ? 'Saving…' : 'Save & Print'}
-            </button>
+            {!Object.keys(grouped).length && (
+              <div style={{ gridColumn: '1/-1', color: 'var(--text-muted)', fontSize: 14, padding: '1rem 0' }}>
+                No products found.
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* RIGHT: Bill (Desktop) */}
+      <div className="bill-panel checkout desktop-only">
+        <div className="bill-panel-head">
+          <h3>Current Bill</h3>
+          <span className="badge badge-brown">{totalItems} items</span>
+        </div>
+        {renderCustomerForm()}
+        {renderCartItems()}
+        <div className="bill-panel-foot">
+          {renderBillTotals()}
+          {renderPaymentButtons()}
+          {renderActionButtons()}
+        </div>
+      </div>
+
+      {/* Mobile Summary Bar (Sticky) */}
+      {cartItems.length > 0 && (
+        <div className="mobile-summary" onClick={() => setIsDrawerOpen(true)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span className="count">{totalItems} items</span>
+            <span className="total">₹{total.toFixed(2)}</span>
+          </div>
+          <button className="btn btn-primary btn-sm" style={{ border: '1px solid rgba(255,255,255,0.2)' }}>
+            View Bill →
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Cart Drawer */}
+      {isDrawerOpen && (
+        <>
+          <div className="cart-drawer-backdrop" onClick={() => setIsDrawerOpen(false)} />
+          <div className="cart-drawer">
+            <div className="drawer-handle" />
+            <div className="bill-panel-head">
+              <h3>Checkout Details</h3>
+              <button className="del-btn" style={{ fontSize: 24 }} onClick={() => setIsDrawerOpen(false)}>×</button>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {renderCustomerForm()}
+              {renderCartItems()}
+            </div>
+            <div className="bill-panel-foot" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
+              {renderBillTotals()}
+              {renderPaymentButtons()}
+              {renderActionButtons()}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

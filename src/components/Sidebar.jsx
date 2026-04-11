@@ -25,18 +25,27 @@ export default function Sidebar({ active, onNav }) {
             onClick={() => onNav(n.key)}
           >
             <n.icon />
-            {n.label}
+            <span>{n.label}</span>
           </button>
         ))}
+        {/* Sign Out integrated for mobile layout */}
+        <button
+          className="nav-item mobile-only"
+          style={{ color: 'rgba(237,217,190,0.5)' }}
+          onClick={signOut}
+        >
+          <LogoutIcon />
+          <span>Sign Out</span>
+        </button>
       </nav>
 
-      <div className="sidebar-footer">
+      <div className="sidebar-footer desktop-only">
         <button
           className="nav-item"
           style={{ width: '100%', color: 'rgba(237,217,190,0.5)' }}
           onClick={signOut}
         >
-          <LogoutIcon /> Sign Out
+          <LogoutIcon /> <span>Sign Out</span>
         </button>
       </div>
     </aside>
