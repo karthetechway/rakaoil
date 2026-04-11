@@ -32,14 +32,17 @@ export default function Billing() {
 
   // ── Products filter & group ────────────────────────────────
   const filtered = products.filter(p => {
-    // Robust category matching (case-insensitive & trimmed)
     const pCat = (p.category || '').toLowerCase().trim()
     const sCat = (cat || 'All').toLowerCase().trim()
-    const matchCat = sCat === 'all' || pCat === sCat
+    
+    // Smart Filter: Allow partial matches (e.g., "Ghee" matches "Cow Ghee")
+    // Fallback: If category has "&", handle it loosely
+    const matchCat = sCat === 'all' || pCat === sCat || pCat.includes(sCat) || (sCat.includes('&') && pCat.includes('sugar'))
     
     const q = (search || '').toLowerCase().trim()
     return matchCat && (!q || p.name.toLowerCase().includes(q) || (p.name_tamil || '').includes(q))
   })
+  
   const grouped = filtered.reduce((acc, p) => {
     if (!acc[p.name]) acc[p.name] = []
     acc[p.name].push(p)
@@ -326,8 +329,16 @@ export default function Billing() {
               />
             ))}
             {!Object.keys(grouped).length && (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, padding: '2rem 0' }}>
-                No products found.
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, padding: '3rem 0' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+                <p>No products found under "<strong>{cat}</strong>"</p>
+                <button 
+                  className="btn btn-outline btn-sm" 
+                  style={{ marginTop: 16 }}
+                  onClick={() => { setCat('All'); setSearch('') }}
+                >
+                  Show all products
+                </button>
               </div>
             )}
           </div>

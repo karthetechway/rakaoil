@@ -204,7 +204,10 @@ function ProductsContent() {
                     <div>
                       <div className="pname">{p.name}</div>
                       <div className="ptamil">{p.name_tamil || '—'}</div>
-                      <div className="badge">{p.size}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                         <span className="badge">{p.size}</span>
+                         <span className="badge badge-gold" style={{ background: 'var(--cream-dark)', color: 'var(--brown-dark)' }}>{p.category}</span>
+                      </div>
                     </div>
                     <div className="ai-price">
                       <span>₹{p.price}</span>
