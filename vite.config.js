@@ -9,15 +9,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 const REPO_NAME = 'rakaoil'
 
 export default defineConfig({
-  // base is /repo-name/ for GitHub Pages project sites
-  // For a username.github.io repo (root site) set base: '/'
-  base: `/${REPO_NAME}/`,
+  // base is / for standard hosting like Vercel/Netlify
+  base: '/',
 
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      base: `/${REPO_NAME}/`,
+      base: '/',
       manifest: {
         name: 'J Oil Mill Billing',
         short_name: 'J Oil Mill Bill',
@@ -25,11 +24,11 @@ export default defineConfig({
         theme_color: '#7C5C3E',
         background_color: '#FDF6EE',
         display: 'standalone',
-        start_url: `/${REPO_NAME}/`,
-        scope: `/${REPO_NAME}/`,
+        start_url: '/',
+        scope: '/',
         icons: [
-          { src: `/${REPO_NAME}/icon-192.png`, sizes: '192x192', type: 'image/png' },
-          { src: `/${REPO_NAME}/icon-512.png`, sizes: '512x512', type: 'image/png' }
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
       },
       workbox: {
