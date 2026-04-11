@@ -180,119 +180,11 @@ export default function Billing() {
 
   if (loading) return <div style={{ padding: '2rem', color: 'var(--text-muted)' }}>Loading products…</div>
 
-  return (
-    <div className="billing-layout">
 
-      {/* LEFT: Products */}
-      <div className="bill-panel">
-        <div className="prod-search">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products or Tamil name…" />
-        </div>
-        <div className="cat-strip">
-          {CATS.map(c => (
-            <button key={c} className={`cat-chip${cat === c ? ' active' : ''}`} onClick={() => setCat(c)}>{c}</button>
-          ))}
-        </div>
-        <div className="bill-panel-body">
-          <div className="products-grid">
-            {Object.entries(grouped).map(([name, items]) => (
-              <div key={name} className="product-card">
-                <div className="pname">{name}</div>
-                <div className="ptamil">{items[0].name_tamil}</div>
-                {items.map(p => (
-                  <button
-                    key={p.id}
-                    className={`size-btn${cart[p.id] ? ' has-items' : ''}${lastAddedId === p.id ? ' animate-pulse' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); addItem(p) }}
-                  >
-                    <span>{p.size}</span>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
-                      ₹{p.price}
-                      {cart[p.id] && <span className="qty-tag">{cart[p.id]}</span>}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ))}
-            {!Object.keys(grouped).length && (
-              <div style={{ gridColumn: '1/-1', color: 'var(--text-muted)', fontSize: 14, padding: '1rem 0' }}>
-                No products found.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* RIGHT: Bill (Desktop) */}
-      <div className="bill-panel checkout desktop-only">
-        <div className="bill-panel-head">
-          <h3>Current Bill</h3>
-          <span className="badge badge-brown">{totalItems} items</span>
-        </div>
 
-        {/* Customer */}
-        <div style={{ padding: '.75rem 1.1rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ marginBottom: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              Mobile Number <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span>
-              {lookingUp && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>searching…</span>}
-              {returning && !lookingUp && (
-                <span style={{ fontSize: 11, background: '#e8f5ec', color: '#3a7d51', padding: '1px 8px', borderRadius: 99 }}>
-                  Returning customer ✓
-                </span>
-              )}
-            </label>
-            <input type="tel" value={custPhone}
-              onChange={e => { setCustPhone(e.target.value); setPhoneError('') }}
-              placeholder="10-digit mobile number"
-              style={{ borderColor: phoneError ? 'var(--red)' : undefined }}
-            />
-            {phoneError && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{phoneError}</div>}
-          </div>
-          <div>
-            <label style={{ marginBottom: 4 }}>
-              Customer Name <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span>
-            </label>
-            <input type="text" value={custName}
-              onChange={e => { setCustName(e.target.value); setNameError('') }}
-              placeholder="Full name"
-              style={{ borderColor: nameError ? 'var(--red)' : undefined }}
-            />
-            {nameError && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{nameError}</div>}
-          </div>
-        </div>
 
-        {/* Cart */}
-        <div className="bill-panel-body">
-          {!cartItems.length
-            ? <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)', fontSize: 13 }}>
-              Tap a product size on the left to add
-            </div>
-            : cartItems.map(item => (
-              <div key={item.product_id} className="bill-item">
-                <div>
-                  <div className="bi-name">{item.product_name}</div>
-                  <div className="bi-size">{item.size} × ₹{item.unit_price}</div>
-                </div>
-                <div className="qty-ctrl">
-                  <button className="qty-btn" onClick={() => changeQty(item.product_id, -1)}>−</button>
-                  <span className="qty-num">{item.quantity}</span>
-                  <button className="qty-btn" onClick={() => changeQty(item.product_id, +1)}>+</button>
-                </div>
-                <div className="bi-price">₹{item.line_total.toFixed(2)}</div>
-                <button className="del-btn" onClick={() => removeItem(item.product_id)}>×</button>
-              </div>
-            ))
-          }
-        </div>
 
-        {/* Totals */}
-        <div className="bill-panel-foot">
-      {renderBillTotals()}
-      {renderPaymentButtons()}
-      {renderActionButtons()}
-    </div>
-  )
 
   // ── Render Helpers ─────────────────────────────────────────
   function renderBillTotals() {
