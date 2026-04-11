@@ -19,9 +19,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       base: `/${REPO_NAME}/`,
       manifest: {
-        name: 'Chekku Oil Billing',
-        short_name: 'Chekku Bill',
-        description: 'Billing software for Chekku Oil Shop',
+        name: 'J Oil Mill Billing',
+        short_name: 'J Oil Mill Bill',
+        description: 'Billing software for J Oil Mill',
         theme_color: '#7C5C3E',
         background_color: '#FDF6EE',
         display: 'standalone',
