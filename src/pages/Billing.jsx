@@ -43,10 +43,11 @@ export default function Billing() {
   }, {})
 
   // ── Cart ───────────────────────────────────────────────────
-  const addItem = p => {
-    setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
+  const addBatchItems = (p, qty) => {
+    setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + qty }))
     setLastAddedId(p.id)
-    setTimeout(() => setLastAddedId(null), 200)
+    setTimeout(() => setLastAddedId(null), 300)
+    toast(`${qty} × ${p.size} ${p.name} added!`)
   }
   const changeQty = (id, d) => setCart(c => {
     const q = (c[id] || 0) + d
@@ -310,28 +311,18 @@ export default function Billing() {
           ))}
         </div>
         <div className="bill-panel-body">
-          <div className="products-grid">
+          <div className="products-list">
             {Object.entries(grouped).map(([name, items]) => (
-              <div key={name} className="product-card">
-                <div className="pname">{name}</div>
-                <div className="ptamil">{items[0].name_tamil}</div>
-                {items.map(p => (
-                  <button
-                    key={p.id}
-                    className={`size-btn${cart[p.id] ? ' has-items' : ''}${lastAddedId === p.id ? ' animate-pulse' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); addItem(p) }}
-                  >
-                    <span>{p.size}</span>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
-                      ₹{p.price}
-                      {cart[p.id] && <span className="qty-tag">{cart[p.id]}</span>}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <ProductRow
+                key={name}
+                name={name}
+                items={items}
+                onAdd={addBatchItems}
+                isLastAdded={items.some(i => i.id === lastAddedId)}
+              />
             ))}
             {!Object.keys(grouped).length && (
-              <div style={{ gridColumn: '1/-1', color: 'var(--text-muted)', fontSize: 14, padding: '1rem 0' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, padding: '2rem 0' }}>
                 No products found.
               </div>
             )}
@@ -389,6 +380,52 @@ export default function Billing() {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function ProductRow({ name, items, onAdd, isLastAdded }) {
+  const [selectedId, setSelectedId] = useState(items[0]?.id)
+  const [qty, setQty] = useState(1)
+
+  const selectedProduct = items.find(i => i.id === selectedId)
+
+  const doAdd = () => {
+    if (!selectedProduct) return
+    onAdd(selectedProduct, qty)
+    setQty(1) // Reset quantity to 1 after adding
+  }
+
+  return (
+    <div className={`product-row ${isLastAdded ? 'animate-pulse' : ''}`}>
+      <div className="p-info">
+        <div className="pname">{name}</div>
+        <div className="ptamil">{items[0].name_tamil}</div>
+      </div>
+
+      <div className="size-chips">
+        {items.map(p => (
+          <button
+            key={p.id}
+            className={`chip ${selectedId === p.id ? 'active' : ''}`}
+            onClick={() => setSelectedId(p.id)}
+          >
+            <span>{p.size}</span>
+            <span className="c-price">₹{p.price}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="row-actions">
+        <div className="qty-ctrl">
+          <button className="qty-btn" onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
+          <span className="qty-num">{qty}</span>
+          <button className="qty-btn" onClick={() => setQty(q => q + 1)}>+</button>
+        </div>
+        <button className="add-btn" onClick={doAdd} disabled={!selectedProduct}>
+          Add
+        </button>
+      </div>
     </div>
   )
 }

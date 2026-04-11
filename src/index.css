@@ -275,29 +275,44 @@ tbody tr:hover { background: var(--cream-dark); }
   background: transparent; color: var(--text-mid); cursor: pointer;
 }
 .cat-chip.active { background: var(--brown); color: var(--cream); border-color: var(--brown); }
-.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 10px; padding: 1rem 1.1rem; }
-.product-card {
-  border: 1px solid var(--border); border-radius: var(--r-md);
-  padding: .75rem; cursor: default;
-  transition: box-shadow .15s, border-color .15s;
+/* product list rows */
+.products-list { display: flex; flex-direction: column; gap: 8px; padding: 1rem 1.1rem; }
+.product-row {
+  display: grid; grid-template-columns: 1.5fr minmax(180px, 1fr) auto auto;
+  align-items: center; gap: 12px;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--r-md);
+  padding: .75rem 1rem; transition: all .15s;
 }
-.product-card:hover { box-shadow: var(--shadow-md); border-color: var(--gold); }
-.product-card .pname { font-size: 13px; font-weight: 500; color: var(--text-main); }
-.product-card .ptamil { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
-.size-btn {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 4px 8px; margin-bottom: 4px; border-radius: var(--r-sm);
+.product-row:hover { border-color: var(--gold); box-shadow: var(--shadow-sm); }
+.product-row .p-info { display: flex; flex-direction: column; }
+.product-row .pname { font-size: 14px; font-weight: 500; color: var(--text-main); }
+.product-row .ptamil { font-size: 12px; color: var(--text-muted); }
+
+.size-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip {
+  padding: 4px 10px; border-radius: 6px; font-size: 11px;
   border: 1px solid var(--border); background: var(--cream);
-  font-size: 12px; color: var(--text-mid); cursor: pointer; width: 100%;
-  transition: all .1s;
+  color: var(--text-mid); cursor: pointer; transition: all .1s;
+  display: flex; flex-direction: column; align-items: center; min-width: 50px;
 }
-.size-btn:hover { background: var(--brown); color: var(--cream); border-color: var(--brown); }
-.size-btn.has-items { border-color: var(--gold); border-width: 1.5px; background: var(--cream-dark); }
-.size-btn .qty-tag {
-  background: var(--gold); color: #fff; font-size: 10px; font-weight: bold;
-  padding: 0px 5px; border-radius: 4px; margin-left: 6px;
+.chip .c-price { font-size: 9px; opacity: 0.7; font-family: var(--font-mono); }
+.chip:hover { border-color: var(--brown); background: var(--cream-dark); }
+.chip.active { background: var(--brown); color: var(--cream); border-color: var(--brown); }
+
+.row-actions { display: flex; align-items: center; gap: 8px; }
+.add-btn {
+  background: var(--green); color: #fff; border: none;
+  padding: 6px 12px; border-radius: 6px; font-size: 12px;
+  font-weight: bold; cursor: pointer; transition: transform .1s;
 }
-.size-btn span { font-family: var(--font-mono); font-size: 11px; }
+.add-btn:active { transform: scale(0.95); }
+.add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .product-row { grid-template-columns: 1fr auto; gap: 8px; padding: .6rem .75rem; }
+  .product-row .size-chips { grid-column: 1 / -1; margin-top: 4px; }
+  .product-row .row-actions { grid-column: 1 / -1; justify-content: space-between; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 8px; }
+}
 
 /* bill items */
 .bill-item {
