@@ -76,6 +76,20 @@ export default function Billing() {
 
   const totalItems = cartItems.reduce((s, i) => s + i.quantity, 0)
   const subtotal = cartItems.reduce((s, i) => s + i.line_total, 0)
+  
+  // GST Calculations (from inclusive prices)
+  const gstDetails = cartItems.reduce((acc, i) => {
+    const p = products.find(x => x.id === i.product_id)
+    const rate = p?.gst_percent || 0
+    if (rate <= 0) return acc
+    
+    const base = i.line_total / (1 + rate / 100)
+    const gstTotal = i.line_total - base
+    acc.cgst += gstTotal / 2
+    acc.sgst += gstTotal / 2
+    return acc
+  }, { cgst: 0, sgst: 0 })
+
   const total = Math.max(0, subtotal - Number(discount))
 
   // ── Returning customer lookup ──────────────────────────────
@@ -149,7 +163,7 @@ export default function Billing() {
 
   // ── WhatsApp ───────────────────────────────────────────────
   const buildWhatsAppMsg = (bill, items, cust, mode, tot, disc) => {
-    const lines = items.map(i => `  • ${i.product_name} ${i.size} ×${i.quantity} = ₹${i.line_total.toFixed(2)}`).join('\n')
+    const lines = items.map(i => `  • ${i.product_name} ${i.size} ×${i.quantity} = ₹${i.line_total.toFixed(2)}`).join('\n  --------------------------\n')
     const sub = items.reduce((s, i) => s + i.line_total, 0)
     return [
       `*${SHOP_NAME}*`,
@@ -164,6 +178,8 @@ export default function Billing() {
       '*Items:*',
       lines,
       '',
+      gstDetails.cgst > 0 ? `CGST      : ₹${gstDetails.cgst.toFixed(2)}` : null,
+      gstDetails.sgst > 0 ? `SGST      : ₹${gstDetails.sgst.toFixed(2)}` : null,
       disc > 0 ? `Subtotal : ₹${sub.toFixed(2)}` : null,
       disc > 0 ? `Discount : -₹${Number(disc).toFixed(2)}` : null,
       `*Total   : ₹${tot.toFixed(2)}*`,
@@ -210,6 +226,18 @@ export default function Billing() {
             style={{ width: 70, textAlign: 'right', padding: '3px 6px', fontSize: 13 }}
           />
         </div>
+        {gstDetails.cgst > 0 && (
+          <>
+            <div className="tot-row">
+              <span style={{ color: 'var(--text-muted)' }}>CGST</span>
+              <span className="val">₹{gstDetails.cgst.toFixed(2)}</span>
+            </div>
+            <div className="tot-row">
+              <span style={{ color: 'var(--text-muted)' }}>SGST</span>
+              <span className="val">₹{gstDetails.sgst.toFixed(2)}</span>
+            </div>
+          </>
+        )}
         <div className="tot-row grand-row">
           <span>Total</span><span>₹{total.toFixed(2)}</span>
         </div>

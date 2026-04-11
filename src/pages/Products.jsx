@@ -6,7 +6,7 @@ import AdminPinGate from '../components/AdminPinGate'
 
 const CATEGORIES = ['Oils', 'Ghee', 'Dal & Sugar']
 const UNITS      = ['ml', 'L', 'g', 'Kg']
-const EMPTY_FORM = { name: '', name_tamil: '', category: 'Oils', size: '', unit: 'ml', price: '' }
+const EMPTY_FORM = { name: '', name_tamil: '', category: 'Oils', size: '', unit: 'ml', price: '', gst_percent: 0 }
 
 // All product mutations are wrapped in this component — shown only after PIN
 function ProductsContent() {
@@ -96,6 +96,7 @@ function ProductsContent() {
         size:       sanitiseText(form.size),
         unit:       form.unit,
         price:      sanitisePrice(form.price),
+        gst_percent: parseFloat(form.gst_percent) || 0,
         active:     true,
         sort_order: maxSort + 1,
       })
@@ -179,6 +180,13 @@ function ProductsContent() {
                 style={{ borderColor: formErrors.price ? 'var(--red)' : undefined }} />
               {formErrors.price && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{formErrors.price}</div>}
             </div>
+
+            <div>
+              <label>GST %</label>
+              <input type="number" min="0" max="100" step="0.1" value={form.gst_percent}
+                onChange={e => setF('gst_percent', e.target.value)}
+                placeholder="e.g. 5, 12, 18" />
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 8, marginTop: '1.25rem', justifyContent: 'flex-end' }}>
@@ -205,8 +213,9 @@ function ProductsContent() {
                       <div className="pname">{p.name}</div>
                       <div className="ptamil">{p.name_tamil || '—'}</div>
                       <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                         <span className="badge">{p.size}</span>
-                         <span className="badge badge-gold" style={{ background: 'var(--cream-dark)', color: 'var(--brown-dark)' }}>{p.category}</span>
+                          <span className="badge">{p.size}</span>
+                          <span className="badge badge-gold" style={{ background: 'var(--cream-dark)', color: 'var(--brown-dark)' }}>{p.category}</span>
+                          <span className="badge badge-brown" style={{ fontSize: 11 }}>GST: {p.gst_percent || 0}%</span>
                       </div>
                     </div>
                     <div className="ai-price">

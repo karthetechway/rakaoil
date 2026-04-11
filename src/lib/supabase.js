@@ -52,7 +52,7 @@ const sanitisePhone = (v) => {
 export const fetchProducts = async () => {
   const { data, error } = await supabase
     .from('products')
-    .select('id, name, name_tamil, category, size, unit, price, active, sort_order')
+    .select('id, name, name_tamil, category, size, unit, price, active, sort_order, gst_percent')
     .eq('active', true)
     .order('sort_order')
   if (error) throw error
@@ -62,7 +62,7 @@ export const fetchProducts = async () => {
 export const fetchAllProducts = async () => {
   const { data, error } = await supabase
     .from('products')
-    .select('id, name, name_tamil, category, size, unit, price, active, sort_order')
+    .select('id, name, name_tamil, category, size, unit, price, active, sort_order, gst_percent')
     .order('sort_order')
   if (error) throw error
   return data
@@ -135,13 +135,23 @@ export const saveBill = async ({ items, customer, paymentMode, discount = 0, not
   // Validate & sanitise each item
   const safeItems = items.map((i, idx) => {
     if (!i.product_name) throw new Error(`Item ${idx + 1}: missing product name`)
+    
+    // GST calculation (Price is inclusive)
+    const priceInclusive = sanitisePrice(i.unit_price)
+    const gstPercent     = Math.max(0, parseFloat(i.gst_percent) || 0)
+    const basePrice      = priceInclusive / (1 + gstPercent / 100)
+    const gstAmountPer   = priceInclusive - basePrice
+    const lineTotal      = priceInclusive * sanitiseQty(i.quantity)
+
     return {
       product_id:   i.product_id  || null,
       product_name: sanitiseText(i.product_name),
       size:         sanitiseText(i.size),
       quantity:     sanitiseQty(i.quantity),
-      unit_price:   sanitisePrice(i.unit_price),
-      line_total:   sanitisePrice(i.line_total),
+      unit_price:   priceInclusive,
+      line_total:   sanitisePrice(lineTotal),
+      gst_percent:  gstPercent,
+      gst_amount:   Math.round(gstAmountPer * i.quantity * 100) / 100
     }
   })
 

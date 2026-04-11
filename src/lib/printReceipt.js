@@ -15,6 +15,18 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
   const dateStr = now.toLocaleDateString('en-IN') + ' ' +
     now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
 
+  // GST Calculations
+  const gstBreakdown = items.reduce((acc, i) => {
+    const rate = parseFloat(i.gst_percent) || 0
+    if (rate <= 0) return acc
+    const totalLine = Number(i.line_total)
+    const base = totalLine / (1 + rate / 100)
+    const gst = totalLine - base
+    acc.cgst += gst / 2
+    acc.sgst += gst / 2
+    return acc
+  }, { cgst: 0, sgst: 0 })
+
   const itemRows = items.map((item, index) => `
     <div class="item">
       <div class="item-row">
@@ -29,6 +41,11 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
   const discountRows = safeDiscount > 0 ? `
     <div class="tot-row"><span>Subtotal</span><span>&#8377;${safeSubtotal.toFixed(2)}</span></div>
     <div class="tot-row"><span>Discount</span><span>-&#8377;${safeDiscount.toFixed(2)}</span></div>
+  ` : ''
+
+  const gstRows = (gstBreakdown.cgst > 0 || gstBreakdown.sgst > 0) ? `
+    <div class="tot-row"><span>CGST</span><span>&#8377;${gstBreakdown.cgst.toFixed(2)}</span></div>
+    <div class="tot-row"><span>SGST</span><span>&#8377;${gstBreakdown.sgst.toFixed(2)}</span></div>
   ` : ''
 
   return `<!DOCTYPE html>
@@ -94,6 +111,7 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
   <div class="dash"></div>
 
   ${discountRows}
+  ${gstRows}
   <div class="grand-row"><span>TOTAL</span><span>&#8377;${safeTotal.toFixed(2)}</span></div>
 
   <div class="dash"></div>

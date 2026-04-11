@@ -17,6 +17,18 @@ const Receipt = forwardRef(({ bill, items = [], customer, paymentMode, discount 
   const safeSubtotal = items.reduce((s, i) => s + i.line_total, 0)
   const safeDiscount = Number(discount) || 0
 
+  // GST Calculations
+  const gstBreakdown = items.reduce((acc, i) => {
+    const rate = parseFloat(i.gst_percent) || 0
+    if (rate <= 0) return acc
+    const totalLine = Number(i.line_total)
+    const base = totalLine / (1 + rate / 100)
+    const gst = totalLine - base
+    acc.cgst += gst / 2
+    acc.sgst += gst / 2
+    return acc
+  }, { cgst: 0, sgst: 0 })
+
   return (
     <>
       {/* Print-only global style — hides everything except the receipt */}
@@ -89,6 +101,17 @@ const Receipt = forwardRef(({ bill, items = [], customer, paymentMode, discount 
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span>Discount</span><span>-₹{safeDiscount.toFixed(2)}</span>
+            </div>
+          </>
+        )}
+
+        {(gstBreakdown.cgst > 0 || gstBreakdown.sgst > 0) && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span>CGST</span><span>₹{gstBreakdown.cgst.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span>SGST</span><span>₹{gstBreakdown.sgst.toFixed(2)}</span>
             </div>
           </>
         )}

@@ -69,6 +69,22 @@ export default function History() {
       <div class="tot-row"><span>Subtotal</span><span>&#8377;${safeSubtotal.toFixed(2)}</span></div>
       <div class="tot-row"><span>Discount</span><span>-&#8377;${safeDiscount.toFixed(2)}</span></div>` : ''
 
+    // GST Calculations
+    const gstBreakdown = items.reduce((acc, i) => {
+      const rate = parseFloat(i.gst_percent) || 0
+      if (rate <= 0) return acc
+      const totalLine = Number(i.line_total)
+      const base = totalLine / (1 + rate / 100)
+      const gst = totalLine - base
+      acc.cgst += gst / 2
+      acc.sgst += gst / 2
+      return acc
+    }, { cgst: 0, sgst: 0 })
+
+    const gstRows = (gstBreakdown.cgst > 0 || gstBreakdown.sgst > 0) ? `
+      <div class="tot-row"><span>CGST</span><span>&#8377;${gstBreakdown.cgst.toFixed(2)}</span></div>
+      <div class="tot-row"><span>SGST</span><span>&#8377;${gstBreakdown.sgst.toFixed(2)}</span></div>` : ''
+
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
       <title>Bill #${b.bill_number}</title>
       <style>
@@ -109,6 +125,7 @@ export default function History() {
       ${itemRows}
       <div class="dash"></div>
       ${discRows}
+      ${gstRows}
       <div class="grand"><span>TOTAL</span><span>&#8377;${safeTotal.toFixed(2)}</span></div>
       <div class="dash"></div>
       <div class="footer">
