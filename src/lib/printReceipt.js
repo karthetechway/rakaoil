@@ -1,18 +1,18 @@
 // Opens a tiny popup window, writes receipt HTML into it, and prints it.
 // This completely sidesteps the React DOM / CSS media query conflicts.
 
-const SHOP_NAME    = () => import.meta.env.VITE_SHOP_NAME    || 'Chekku Oil Shop'
+const SHOP_NAME = () => import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
 const SHOP_ADDRESS = () => import.meta.env.VITE_SHOP_ADDRESS || ''
-const SHOP_PHONE   = () => import.meta.env.VITE_SHOP_PHONE   || ''
-const SHOP_GST     = () => import.meta.env.VITE_SHOP_GST     || ''
+const SHOP_PHONE = () => import.meta.env.VITE_SHOP_PHONE || ''
+const SHOP_GST = () => import.meta.env.VITE_SHOP_GST || ''
 
 function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 0, total }) {
-  const safeTotal    = typeof total === 'number' ? total : items.reduce((s, i) => s + i.line_total, 0)
+  const safeTotal = typeof total === 'number' ? total : items.reduce((s, i) => s + i.line_total, 0)
   const safeSubtotal = items.reduce((s, i) => s + i.line_total, 0)
   const safeDiscount = Number(discount) || 0
-  const now          = new Date()
-  const dateStr      = now.toLocaleDateString('en-IN') + ' ' +
-                       now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+  const now = new Date()
+  const dateStr = now.toLocaleDateString('en-IN') + ' ' +
+    now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
 
   const itemRows = items.map(item => `
     <div class="item">
@@ -68,8 +68,8 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
   <div class="center" style="margin-bottom:8px">
     <div class="shop-name">${SHOP_NAME()}</div>
     ${SHOP_ADDRESS() ? `<div>${SHOP_ADDRESS()}</div>` : ''}
-    ${SHOP_PHONE()   ? `<div>Ph: ${SHOP_PHONE()}</div>` : ''}
-    ${SHOP_GST()     ? `<div>${SHOP_GST()}</div>` : ''}
+    ${SHOP_PHONE() ? `<div>Ph: ${SHOP_PHONE()}</div>` : ''}
+    ${SHOP_GST() ? `<div>${SHOP_GST()}</div>` : ''}
   </div>
 
   <div class="dash"></div>
@@ -77,7 +77,7 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
   <div class="meta">
     <div>Bill No : <strong>#${bill?.bill_number ?? '—'}</strong></div>
     <div>Date    : ${dateStr}</div>
-    ${customer?.name  ? `<div>Name    : ${customer.name}</div>`  : ''}
+    ${customer?.name ? `<div>Name    : ${customer.name}</div>` : ''}
     ${customer?.phone ? `<div>Phone   : ${customer.phone}</div>` : ''}
     <div>Payment : <strong>${(paymentMode || 'CASH').toUpperCase()}</strong></div>
   </div>
@@ -123,7 +123,7 @@ export function printReceipt(data) {
     popup.focus()
     popup.print()
     // Close after a short delay so user sees it printed
-    setTimeout(() => { try { popup.close() } catch (_) {} }, 1500)
+    setTimeout(() => { try { popup.close() } catch (_) { } }, 1500)
   }
 
   // Fallback if onload doesn't fire (some browsers)
@@ -132,8 +132,8 @@ export function printReceipt(data) {
       if (!popup.closed) {
         popup.focus()
         popup.print()
-        setTimeout(() => { try { popup.close() } catch (_) {} }, 1500)
+        setTimeout(() => { try { popup.close() } catch (_) { } }, 1500)
       }
-    } catch (_) {}
+    } catch (_) { }
   }, 800)
 }
