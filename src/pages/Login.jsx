@@ -23,7 +23,7 @@ export default function Login() {
       <div className="card" style={{ width: 360, padding: '2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🫙</div>
-          <h1 style={{ fontSize: '1.5rem', color: 'var(--brown-dark)' }}>Chekku Oil Billing</h1>
+          <h1 style={{ fontSize: '1.5rem', color: 'var(--brown-dark)' }}>J Oil Mill Billing</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Sign in to continue</p>
         </div>
 

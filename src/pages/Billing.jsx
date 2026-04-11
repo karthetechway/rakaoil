@@ -5,28 +5,28 @@ import { useToast } from '../components/Toast'
 import { printReceipt } from '../lib/printReceipt'
 
 const CATS = ['All', 'Oils', 'Ghee', 'Dal & Sugar']
-const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'Chekku Oil Shop'
+const SHOP_NAME = import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
 const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || ''
-const SHOP_PHONE   = import.meta.env.VITE_SHOP_PHONE   || ''
+const SHOP_PHONE = import.meta.env.VITE_SHOP_PHONE || ''
 
 export default function Billing() {
   const { products, loading } = useProducts()
   const toast = useToast()
 
-  const [cat, setCat]       = useState('All')
+  const [cat, setCat] = useState('All')
   const [search, setSearch] = useState('')
-  const [cart, setCart]     = useState({})
+  const [cart, setCart] = useState({})
 
-  const [custName, setCustName]     = useState('')
-  const [custPhone, setCustPhone]   = useState('')
+  const [custName, setCustName] = useState('')
+  const [custPhone, setCustPhone] = useState('')
   const [phoneError, setPhoneError] = useState('')
-  const [nameError, setNameError]   = useState('')
-  const [lookingUp, setLookingUp]   = useState(false)
-  const [returning, setReturning]   = useState(false)
+  const [nameError, setNameError] = useState('')
+  const [lookingUp, setLookingUp] = useState(false)
+  const [returning, setReturning] = useState(false)
 
-  const [payMode, setPayMode]   = useState('cash')
+  const [payMode, setPayMode] = useState('cash')
   const [discount, setDiscount] = useState(0)
-  const [saving, setSaving]     = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // ── Products filter & group ────────────────────────────────
   const filtered = products.filter(p => {
@@ -41,14 +41,14 @@ export default function Billing() {
   }, {})
 
   // ── Cart ───────────────────────────────────────────────────
-  const addItem    = p  => setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
-  const changeQty  = (id, d) => setCart(c => {
+  const addItem = p => setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
+  const changeQty = (id, d) => setCart(c => {
     const q = (c[id] || 0) + d
     if (q <= 0) { const n = { ...c }; delete n[id]; return n }
     return { ...c, [id]: q }
   })
   const removeItem = id => setCart(c => { const n = { ...c }; delete n[id]; return n })
-  const clearAll   = () => {
+  const clearAll = () => {
     setCart({}); setCustName(''); setCustPhone('')
     setDiscount(0); setPhoneError(''); setNameError(''); setReturning(false)
   }
@@ -60,7 +60,7 @@ export default function Billing() {
   }).filter(Boolean)
 
   const subtotal = cartItems.reduce((s, i) => s + i.line_total, 0)
-  const total    = Math.max(0, subtotal - Number(discount))
+  const total = Math.max(0, subtotal - Number(discount))
 
   // ── Returning customer lookup ──────────────────────────────
   const lookupPhone = useCallback(async (phone) => {
@@ -77,7 +77,7 @@ export default function Billing() {
       } else {
         setReturning(false)
       }
-    } catch (_) {}
+    } catch (_) { }
     setLookingUp(false)
   }, [toast])
 
@@ -100,10 +100,10 @@ export default function Billing() {
   // ── Save core ──────────────────────────────────────────────
   const doSave = async () => {
     const itemsSnap = [...cartItems]
-    const custSnap  = { name: custName.trim(), phone: custPhone.replace(/\D/g, '') }
-    const discSnap  = Number(discount)
+    const custSnap = { name: custName.trim(), phone: custPhone.replace(/\D/g, '') }
+    const discSnap = Number(discount)
     const totalSnap = total
-    const paySnap   = payMode
+    const paySnap = payMode
 
     const bill = await saveBill({
       items: itemsSnap,
@@ -133,7 +133,7 @@ export default function Billing() {
   // ── WhatsApp ───────────────────────────────────────────────
   const buildWhatsAppMsg = (bill, items, cust, mode, tot, disc) => {
     const lines = items.map(i => `  • ${i.product_name} ${i.size} ×${i.quantity} = ₹${i.line_total.toFixed(2)}`).join('\n')
-    const sub   = items.reduce((s, i) => s + i.line_total, 0)
+    const sub = items.reduce((s, i) => s + i.line_total, 0)
     return [
       `*${SHOP_NAME}*`,
       SHOP_ADDRESS || null,
@@ -146,7 +146,7 @@ export default function Billing() {
       '*Items:*',
       lines,
       '',
-      disc > 0 ? `Subtotal : ₹${sub.toFixed(2)}`        : null,
+      disc > 0 ? `Subtotal : ₹${sub.toFixed(2)}` : null,
       disc > 0 ? `Discount : -₹${Number(disc).toFixed(2)}` : null,
       `*Total   : ₹${tot.toFixed(2)}*`,
       `Payment : ${mode.toUpperCase()}`,
@@ -250,8 +250,8 @@ export default function Billing() {
         <div className="bill-panel-body">
           {!cartItems.length
             ? <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)', fontSize: 13 }}>
-                Tap a product size on the left to add
-              </div>
+              Tap a product size on the left to add
+            </div>
             : cartItems.map(item => (
               <div key={item.product_id} className="bill-item">
                 <div>
