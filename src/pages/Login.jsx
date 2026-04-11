@@ -47,8 +47,7 @@ export default function Login() {
         </form>
 
         <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginTop: 16 }}>
-          First time? Create an account in Supabase Auth dashboard,<br />
-          then use those credentials here.
+          New user? Contact Techway Solution for credentials.
         </p>
       </div>
     </div>
