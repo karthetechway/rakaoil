@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://YOUR_USERNAME.github.io/chekku-billing/
 // The base path must match your repository name exactly.
 // Change 'chekku-billing' below if your repo has a different name.
-const REPO_NAME = 'chekku-billing'
+const REPO_NAME = 'rakaoil'
 
 export default defineConfig({
   // base is /repo-name/ for GitHub Pages project sites
