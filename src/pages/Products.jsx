@@ -3,14 +3,24 @@ import { useProducts } from '../hooks/useProducts'
 import { updateProductPrice, supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
+const CATEGORIES = ['Oils', 'Ghee', 'Dal & Sugar']
+const UNITS      = ['ml', 'L', 'g', 'Kg']
+
+const EMPTY_FORM = { name: '', name_tamil: '', category: 'Oils', size: '', unit: 'ml', price: '' }
+
 export default function Products() {
   const { products, loading, reload } = useProducts()
-  const [editing, setEditing] = useState({})   // { [id]: newPrice }
+  const [editing, setEditing] = useState({})
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm]       = useState(EMPTY_FORM)
+  const [formErrors, setFormErrors] = useState({})
+  const [addLoading, setAddLoading] = useState(false)
   const toast = useToast()
 
+  // ── Price inline edit ──────────────────────────────────────
   const handlePriceChange = (id, val) => setEditing(e => ({ ...e, [id]: val }))
 
-  const handleSave = async (id) => {
+  const handlePriceSave = async (id) => {
     const price = Number(editing[id])
     if (!price || price <= 0) return toast('Enter a valid price', 'error')
     try {
@@ -18,21 +28,63 @@ export default function Products() {
       setEditing(e => { const n = { ...e }; delete n[id]; return n })
       toast('Price updated!')
       reload()
-    } catch (e) {
-      toast(e.message, 'error')
-    }
+    } catch (e) { toast(e.message, 'error') }
   }
 
   const toggleActive = async (id, current) => {
     try {
       await supabase.from('products').update({ active: !current }).eq('id', id)
-      toast(current ? 'Product hidden' : 'Product shown')
+      toast(current ? 'Product hidden from billing' : 'Product visible in billing')
       reload()
-    } catch (e) {
-      toast(e.message, 'error')
-    }
+    } catch (e) { toast(e.message, 'error') }
   }
 
+  const deleteProduct = async (id, name) => {
+    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return
+    try {
+      await supabase.from('products').delete().eq('id', id)
+      toast('Product deleted')
+      reload()
+    } catch (e) { toast(e.message, 'error') }
+  }
+
+  // ── Add new product ────────────────────────────────────────
+  const validateForm = () => {
+    const errs = {}
+    if (!form.name.trim())  errs.name  = 'Product name is required'
+    if (!form.size.trim())  errs.size  = 'Size is required (e.g. 200ml, 500g)'
+    if (!form.price || Number(form.price) <= 0) errs.price = 'Enter a valid price'
+    setFormErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
+  const handleAddProduct = async () => {
+    if (!validateForm()) return
+    setAddLoading(true)
+    try {
+      const maxSort = products.length ? Math.max(...products.map(p => p.sort_order || 0)) : 0
+      await supabase.from('products').insert({
+        name:       form.name.trim(),
+        name_tamil: form.name_tamil.trim() || null,
+        category:   form.category,
+        size:       form.size.trim(),
+        unit:       form.unit,
+        price:      Number(form.price),
+        active:     true,
+        sort_order: maxSort + 1,
+      })
+      toast(`"${form.name} ${form.size}" added!`)
+      setForm(EMPTY_FORM)
+      setShowAdd(false)
+      setFormErrors({})
+      reload()
+    } catch (e) { toast(e.message, 'error') }
+    setAddLoading(false)
+  }
+
+  const setF = (key, val) => { setForm(f => ({ ...f, [key]: val })); setFormErrors(e => ({ ...e, [key]: '' })) }
+
+  // ── Group by category (include hidden products on this page) ──
   const grouped = products.reduce((acc, p) => {
     if (!acc[p.category]) acc[p.category] = []
     acc[p.category].push(p)
@@ -45,9 +97,77 @@ export default function Products() {
     <div className="page">
       <div className="page-header">
         <h2>Products & Prices</h2>
-        <button className="btn btn-outline btn-sm" onClick={reload}>Refresh</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-outline btn-sm" onClick={reload}>Refresh</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(s => !s)}>
+            {showAdd ? '✕ Cancel' : '+ Add Product'}
+          </button>
+        </div>
       </div>
 
+      {/* ── Add product form ── */}
+      {showAdd && (
+        <div className="card" style={{ marginBottom: '1.5rem', borderColor: 'var(--gold)', borderWidth: 1.5 }}>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--brown-dark)' }}>Add New Product</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+
+            <div>
+              <label>Product Name (English) <span style={{ color: 'var(--red)' }}>*</span></label>
+              <input value={form.name} onChange={e => setF('name', e.target.value)}
+                placeholder="e.g. Sesame Oil"
+                style={{ borderColor: formErrors.name ? 'var(--red)' : undefined }} />
+              {formErrors.name && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{formErrors.name}</div>}
+            </div>
+
+            <div>
+              <label>Tamil Name</label>
+              <input value={form.name_tamil} onChange={e => setF('name_tamil', e.target.value)}
+                placeholder="e.g. எள்ளெண்ணெய்" />
+            </div>
+
+            <div>
+              <label>Category <span style={{ color: 'var(--red)' }}>*</span></label>
+              <select value={form.category} onChange={e => setF('category', e.target.value)}>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label>Size <span style={{ color: 'var(--red)' }}>*</span></label>
+              <input value={form.size} onChange={e => setF('size', e.target.value)}
+                placeholder="e.g. 200ml, 1L, 500g, 1Kg"
+                style={{ borderColor: formErrors.size ? 'var(--red)' : undefined }} />
+              {formErrors.size && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{formErrors.size}</div>}
+            </div>
+
+            <div>
+              <label>Unit</label>
+              <select value={form.unit} onChange={e => setF('unit', e.target.value)}>
+                {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label>Price (₹) <span style={{ color: 'var(--red)' }}>*</span></label>
+              <input type="number" min="1" value={form.price} onChange={e => setF('price', e.target.value)}
+                placeholder="e.g. 95"
+                style={{ borderColor: formErrors.price ? 'var(--red)' : undefined }} />
+              {formErrors.price && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{formErrors.price}</div>}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: '1.25rem', justifyContent: 'flex-end' }}>
+            <button className="btn btn-outline" onClick={() => { setShowAdd(false); setForm(EMPTY_FORM); setFormErrors({}) }}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleAddProduct} disabled={addLoading}>
+              {addLoading ? 'Adding…' : 'Add Product'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Product tables by category ── */}
       {Object.entries(grouped).map(([cat, items]) => (
         <div key={cat} style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ marginBottom: '.75rem', color: 'var(--brown)' }}>{cat}</h3>
@@ -55,36 +175,34 @@ export default function Products() {
             <table>
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Tamil Name</th>
+                  <th>Product Name</th>
+                  <th>Tamil</th>
                   <th>Size</th>
-                  <th>Current Price (₹)</th>
-                  <th>New Price</th>
-                  <th>Visible</th>
+                  <th>Current Price</th>
+                  <th>Update Price</th>
+                  <th>Billing</th>
+                  <th>Delete</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map(p => (
-                  <tr key={p.id}>
+                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
                     <td><strong>{p.name}</strong></td>
-                    <td style={{ color: 'var(--text-muted)' }}>{p.name_tamil}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{p.name_tamil || '—'}</td>
                     <td>{p.size}</td>
                     <td>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
-                        ₹{p.price}
-                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>₹{p.price}</span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <input
-                          type="number" min="1"
+                        <input type="number" min="1"
                           value={editing[p.id] ?? ''}
                           onChange={e => handlePriceChange(p.id, e.target.value)}
                           placeholder={p.price}
-                          style={{ width: 90 }}
+                          style={{ width: 80 }}
                         />
                         {editing[p.id] && (
-                          <button className="btn btn-primary btn-sm" onClick={() => handleSave(p.id)}>
+                          <button className="btn btn-primary btn-sm" onClick={() => handlePriceSave(p.id)}>
                             Save
                           </button>
                         )}
@@ -94,8 +212,14 @@ export default function Products() {
                       <button
                         className={`btn btn-sm ${p.active ? 'btn-outline' : 'btn-danger'}`}
                         onClick={() => toggleActive(p.id, p.active)}
+                        title={p.active ? 'Click to hide from billing screen' : 'Click to show in billing screen'}
                       >
                         {p.active ? 'Visible' : 'Hidden'}
+                      </button>
+                    </td>
+                    <td>
+                      <button className="btn btn-sm btn-danger" onClick={() => deleteProduct(p.id, `${p.name} ${p.size}`)}>
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -105,6 +229,12 @@ export default function Products() {
           </div>
         </div>
       ))}
+
+      {!Object.keys(grouped).length && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+          No products yet. Click "+ Add Product" to get started.
+        </div>
+      )}
     </div>
   )
 }

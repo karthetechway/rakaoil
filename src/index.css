@@ -68,6 +68,9 @@ button { cursor: pointer; font-family: var(--font-body); }
 .btn-danger { background: var(--red); color: #fff; }
 .btn-ghost { background: transparent; color: var(--text-mid); border-color: transparent; padding: 6px 10px; }
 .btn-ghost:hover { background: var(--cream-dark); }
+.btn-whatsapp { background: #25D366; color: #fff; border-color: #25D366; font-weight: 500; }
+.btn-whatsapp:hover { background: #1ebe5d; border-color: #1ebe5d; }
+.btn-whatsapp:disabled { opacity: .45; cursor: not-allowed; }
 .btn-sm { padding: 5px 12px; font-size: 13px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
