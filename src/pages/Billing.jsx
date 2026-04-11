@@ -71,7 +71,15 @@ export default function Billing() {
   const cartItems = Object.entries(cart).map(([id, qty]) => {
     const p = products.find(x => x.id === id)
     if (!p) return null
-    return { product_id: p.id, product_name: p.name, size: p.size, quantity: qty, unit_price: p.price, line_total: p.price * qty }
+    return { 
+      product_id: p.id, 
+      product_name: p.name, 
+      size: p.size, 
+      quantity: qty, 
+      unit_price: p.price, 
+      line_total: p.price * qty,
+      gst_percent: p.gst_percent || 0
+    }
   }).filter(Boolean)
 
   const totalItems = cartItems.reduce((s, i) => s + i.quantity, 0)

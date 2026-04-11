@@ -48,7 +48,7 @@ export default function History() {
     const safeDiscount = Number(b.discount) || 0
     const dateStr = format(new Date(b.created_at), 'dd/MM/yyyy hh:mm a')
 
-    const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'Chekku Oil Shop'
+    const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'J Oil Mill'
     const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || ''
     const SHOP_PHONE   = import.meta.env.VITE_SHOP_PHONE   || ''
     const SHOP_EMAIL   = import.meta.env.VITE_SHOP_EMAIL   || ''

@@ -1,8 +1,8 @@
 import React, { forwardRef } from 'react'
 import { format } from 'date-fns'
 
-const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'Sri Murugan Chekku Oil'
-const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || 'Salem, Tamil Nadu'
+const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'J Oil Mill'
+const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || ''
 const SHOP_PHONE   = import.meta.env.VITE_SHOP_PHONE   || ''
 const SHOP_EMAIL   = import.meta.env.VITE_SHOP_EMAIL   || ''
 const SHOP_GST     = import.meta.env.VITE_SHOP_GST     || ''
