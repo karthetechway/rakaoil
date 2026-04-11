@@ -1,0 +1,74 @@
+# ============================================================
+# GitHub Actions — Auto deploy to GitHub Pages on every push
+# ============================================================
+# Setup steps (one time):
+#  1. Go to your GitHub repo → Settings → Secrets and variables → Actions
+#  2. Click "New repository secret" and add each of these:
+#     - VITE_SUPABASE_URL        → your Supabase project URL
+#     - VITE_SUPABASE_ANON_KEY   → your Supabase anon key
+#     - VITE_SHOP_NAME           → your shop name
+#     - VITE_SHOP_ADDRESS        → your shop address
+#     - VITE_SHOP_PHONE          → your phone number
+#     - VITE_SHOP_GST            → your GST number
+#     - VITE_ADMIN_PIN           → your admin PIN (4-6 digits)
+#  3. Go to Settings → Pages → Source: GitHub Actions
+#  4. Push any change to main branch → site deploys automatically in ~2 min
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # allows manual trigger from Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SHOP_NAME:         ${{ secrets.VITE_SHOP_NAME }}
+          VITE_SHOP_ADDRESS:      ${{ secrets.VITE_SHOP_ADDRESS }}
+          VITE_SHOP_PHONE:        ${{ secrets.VITE_SHOP_PHONE }}
+          VITE_SHOP_GST:          ${{ secrets.VITE_SHOP_GST }}
+          VITE_ADMIN_PIN:         ${{ secrets.VITE_ADMIN_PIN }}
+        run: npm run build
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload dist to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

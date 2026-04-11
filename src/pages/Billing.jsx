@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useReactToPrint } from 'react-to-print'
+import { useCallback, useEffect, useState } from 'react'
 import { useProducts } from '../hooks/useProducts'
 import { saveBill, fetchCustomers } from '../lib/supabase'
 import { useToast } from '../components/Toast'
-import Receipt from '../components/Receipt'
+import { printReceipt } from '../lib/printReceipt'
 
 const CATS = ['All', 'Oils', 'Ghee', 'Dal & Sugar']
 const SHOP_NAME    = import.meta.env.VITE_SHOP_NAME    || 'Chekku Oil Shop'
@@ -12,8 +11,7 @@ const SHOP_PHONE   = import.meta.env.VITE_SHOP_PHONE   || ''
 
 export default function Billing() {
   const { products, loading } = useProducts()
-  const toast     = useToast()
-  const receiptRef = useRef()
+  const toast = useToast()
 
   const [cat, setCat]       = useState('All')
   const [search, setSearch] = useState('')
@@ -29,8 +27,8 @@ export default function Billing() {
   const [payMode, setPayMode]   = useState('cash')
   const [discount, setDiscount] = useState(0)
   const [saving, setSaving]     = useState(false)
-  const [printData, setPrintData] = useState(null)
 
+  // ── Products filter & group ────────────────────────────────
   const filtered = products.filter(p => {
     const matchCat = cat === 'All' || p.category === cat
     const q = search.toLowerCase()
@@ -42,16 +40,17 @@ export default function Billing() {
     return acc
   }, {})
 
-  const addItem   = p  => setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
-  const changeQty = (id, d) => setCart(c => {
+  // ── Cart ───────────────────────────────────────────────────
+  const addItem    = p  => setCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))
+  const changeQty  = (id, d) => setCart(c => {
     const q = (c[id] || 0) + d
     if (q <= 0) { const n = { ...c }; delete n[id]; return n }
     return { ...c, [id]: q }
   })
   const removeItem = id => setCart(c => { const n = { ...c }; delete n[id]; return n })
   const clearAll   = () => {
-    setCart({}); setCustName(''); setCustPhone(''); setDiscount(0)
-    setPhoneError(''); setNameError(''); setReturning(false)
+    setCart({}); setCustName(''); setCustPhone('')
+    setDiscount(0); setPhoneError(''); setNameError(''); setReturning(false)
   }
 
   const cartItems = Object.entries(cart).map(([id, qty]) => {
@@ -63,6 +62,7 @@ export default function Billing() {
   const subtotal = cartItems.reduce((s, i) => s + i.line_total, 0)
   const total    = Math.max(0, subtotal - Number(discount))
 
+  // ── Returning customer lookup ──────────────────────────────
   const lookupPhone = useCallback(async (phone) => {
     const digits = phone.replace(/\D/g, '')
     if (digits.length < 10) { setReturning(false); return }
@@ -86,67 +86,73 @@ export default function Billing() {
     return () => clearTimeout(t)
   }, [custPhone, lookupPhone])
 
+  // ── Validate ───────────────────────────────────────────────
   const validate = () => {
     let ok = true
     if (!custName.trim()) { setNameError('Customer name is required'); ok = false } else setNameError('')
-    const digits = custPhone.replace(/\D/g, '')
-    if (!digits || digits.length < 10) { setPhoneError('Valid 10-digit mobile number is required'); ok = false } else setPhoneError('')
+    if (custPhone.replace(/\D/g, '').length < 10) {
+      setPhoneError('Enter a valid 10-digit mobile number'); ok = false
+    } else setPhoneError('')
     if (!cartItems.length) { toast('Add at least one item', 'error'); ok = false }
     return ok
   }
 
-  const triggerPrint = useReactToPrint({
-    content: () => receiptRef.current,
-    documentTitle: 'Chekku-Bill',
-    removeAfterPrint: false,
-  })
+  // ── Save core ──────────────────────────────────────────────
+  const doSave = async () => {
+    const itemsSnap = [...cartItems]
+    const custSnap  = { name: custName.trim(), phone: custPhone.replace(/\D/g, '') }
+    const discSnap  = Number(discount)
+    const totalSnap = total
+    const paySnap   = payMode
 
+    const bill = await saveBill({
+      items: itemsSnap,
+      customer: custSnap,
+      paymentMode: paySnap,
+      discount: discSnap,
+    })
+    clearAll()
+    return { bill, itemsSnap, custSnap, discSnap, totalSnap, paySnap }
+  }
+
+  // ── Save & Print ───────────────────────────────────────────
+  const handleSave = async () => {
+    if (!validate()) return
+    setSaving(true)
+    try {
+      const { bill, itemsSnap, custSnap, discSnap, totalSnap, paySnap } = await doSave()
+      toast(`Bill #${bill.bill_number} saved!`)
+      // Print in popup — works 100% regardless of CSS
+      printReceipt({ bill, items: itemsSnap, customer: custSnap, paymentMode: paySnap, discount: discSnap, total: totalSnap })
+    } catch (e) {
+      toast(e.message || 'Failed to save bill', 'error')
+    }
+    setSaving(false)
+  }
+
+  // ── WhatsApp ───────────────────────────────────────────────
   const buildWhatsAppMsg = (bill, items, cust, mode, tot, disc) => {
-    const lines = items.map(i => `  * ${i.product_name} ${i.size} x${i.quantity} = Rs.${i.line_total.toFixed(2)}`).join('\n')
+    const lines = items.map(i => `  • ${i.product_name} ${i.size} ×${i.quantity} = ₹${i.line_total.toFixed(2)}`).join('\n')
+    const sub   = items.reduce((s, i) => s + i.line_total, 0)
     return [
       `*${SHOP_NAME}*`,
-      SHOP_ADDRESS || '',
-      SHOP_PHONE ? `Ph: ${SHOP_PHONE}` : '',
+      SHOP_ADDRESS || null,
+      SHOP_PHONE ? `Ph: ${SHOP_PHONE}` : null,
       '',
-      `Bill No : #${bill.bill_number}`,
+      `Bill No : *#${bill.bill_number}*`,
       `Date    : ${new Date().toLocaleDateString('en-IN')}`,
       `Customer: ${cust.name} | ${cust.phone}`,
       '',
       '*Items:*',
       lines,
       '',
-      disc > 0 ? `Subtotal : Rs.${(tot + Number(disc)).toFixed(2)}` : '',
-      disc > 0 ? `Discount : -Rs.${Number(disc).toFixed(2)}` : '',
-      `*Total   : Rs.${tot.toFixed(2)}*`,
+      disc > 0 ? `Subtotal : ₹${sub.toFixed(2)}`        : null,
+      disc > 0 ? `Discount : -₹${Number(disc).toFixed(2)}` : null,
+      `*Total   : ₹${tot.toFixed(2)}*`,
       `Payment : ${mode.toUpperCase()}`,
       '',
-      'Thank you! Come again',
-      'நன்றி! மீண்டும் வாருங்கள்',
-    ].filter(l => l !== undefined).join('\n')
-  }
-
-  const doSave = async () => {
-    const itemsSnap = [...cartItems]
-    const custSnap  = { name: custName.trim(), phone: custPhone.trim() }
-    const discSnap  = Number(discount)
-    const totalSnap = total
-    const paySnap   = payMode
-
-    const bill = await saveBill({ items: itemsSnap, customer: custSnap, paymentMode: paySnap, discount: discSnap })
-    setPrintData({ bill, items: itemsSnap, customer: custSnap, paymentMode: paySnap, discount: discSnap, total: totalSnap })
-    clearAll()
-    return { bill, itemsSnap, custSnap, discSnap, totalSnap, paySnap }
-  }
-
-  const handleSave = async () => {
-    if (!validate()) return
-    setSaving(true)
-    try {
-      await doSave()
-      toast('Bill saved!')
-      setTimeout(() => triggerPrint(), 350)
-    } catch (e) { toast(e.message, 'error') }
-    setSaving(false)
+      'நன்றி! மீண்டும் வாருங்கள் 🙏',
+    ].filter(l => l !== null).join('\n')
   }
 
   const handleWhatsApp = async () => {
@@ -154,11 +160,13 @@ export default function Billing() {
     setSaving(true)
     try {
       const { bill, itemsSnap, custSnap, discSnap, totalSnap, paySnap } = await doSave()
-      toast('Bill saved!')
+      toast(`Bill #${bill.bill_number} saved!`)
       const msg = buildWhatsAppMsg(bill, itemsSnap, custSnap, paySnap, totalSnap, discSnap)
       const num = custSnap.phone.replace(/\D/g, '')
       window.open(`https://wa.me/91${num}?text=${encodeURIComponent(msg)}`, '_blank')
-    } catch (e) { toast(e.message, 'error') }
+    } catch (e) {
+      toast(e.message || 'Failed to save bill', 'error')
+    }
     setSaving(false)
   }
 
@@ -191,7 +199,9 @@ export default function Billing() {
               </div>
             ))}
             {!Object.keys(grouped).length && (
-              <div style={{ gridColumn: '1/-1', color: 'var(--text-muted)', fontSize: 14, padding: '1rem 0' }}>No products found.</div>
+              <div style={{ gridColumn: '1/-1', color: 'var(--text-muted)', fontSize: 14, padding: '1rem 0' }}>
+                No products found.
+              </div>
             )}
           </div>
         </div>
@@ -204,37 +214,30 @@ export default function Billing() {
           <span className="badge badge-brown">{cartItems.length} items</span>
         </div>
 
-        {/* Customer fields */}
+        {/* Customer */}
         <div style={{ padding: '.75rem 1.1rem', borderBottom: '1px solid var(--border)' }}>
-
-          {/* Phone first so lookup fires before name entry */}
           <div style={{ marginBottom: 8 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <span>Mobile Number <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span></span>
-              {lookingUp && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 4 }}>searching…</span>}
+              Mobile Number <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span>
+              {lookingUp && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>searching…</span>}
               {returning && !lookingUp && (
-                <span style={{ fontSize: 11, background: '#e8f5ec', color: '#3a7d51', padding: '1px 8px', borderRadius: 99, marginLeft: 4 }}>
-                  Returning customer
+                <span style={{ fontSize: 11, background: '#e8f5ec', color: '#3a7d51', padding: '1px 8px', borderRadius: 99 }}>
+                  Returning customer ✓
                 </span>
               )}
             </label>
-            <input
-              type="tel"
-              value={custPhone}
+            <input type="tel" value={custPhone}
               onChange={e => { setCustPhone(e.target.value); setPhoneError('') }}
-              placeholder="Enter mobile number (auto-fills name)"
+              placeholder="10-digit mobile number"
               style={{ borderColor: phoneError ? 'var(--red)' : undefined }}
             />
             {phoneError && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 3 }}>{phoneError}</div>}
           </div>
-
           <div>
             <label style={{ marginBottom: 4 }}>
               Customer Name <span style={{ color: 'var(--red)', fontSize: 11 }}>*</span>
             </label>
-            <input
-              type="text"
-              value={custName}
+            <input type="text" value={custName}
               onChange={e => { setCustName(e.target.value); setNameError('') }}
               placeholder="Full name"
               style={{ borderColor: nameError ? 'var(--red)' : undefined }}
@@ -276,11 +279,11 @@ export default function Billing() {
           <div className="tot-row" style={{ alignItems: 'center' }}>
             <span style={{ color: 'var(--text-muted)' }}>Discount (₹)</span>
             <input type="number" min="0" value={discount} onChange={e => setDiscount(e.target.value)}
-              style={{ width: 70, textAlign: 'right', padding: '3px 6px', fontSize: 13 }} />
+              style={{ width: 70, textAlign: 'right', padding: '3px 6px', fontSize: 13 }}
+            />
           </div>
           <div className="tot-row grand-row">
-            <span>Total</span>
-            <span>₹{total.toFixed(2)}</span>
+            <span>Total</span><span>₹{total.toFixed(2)}</span>
           </div>
 
           <div className="pay-btns" style={{ marginTop: 10 }}>
@@ -304,19 +307,6 @@ export default function Billing() {
           </div>
         </div>
       </div>
-
-      {/* Hidden receipt rendered from snapshot — never empty */}
-      {printData && (
-        <Receipt
-          ref={receiptRef}
-          bill={printData.bill}
-          items={printData.items}
-          customer={printData.customer}
-          paymentMode={printData.paymentMode}
-          discount={printData.discount}
-          total={printData.total}
-        />
-      )}
     </div>
   )
 }

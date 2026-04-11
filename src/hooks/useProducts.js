@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { fetchProducts, supabase } from '../lib/supabase'
+import { fetchProducts, fetchAllProducts, supabase } from '../lib/supabase'
 
-export function useProducts() {
+// showAll=false → only active products (billing screen)
+// showAll=true  → all products including hidden (products admin page)
+export function useProducts({ showAll = false } = {}) {
   const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
 
   const load = async () => {
     try {
-      const data = await fetchProducts()
+      const data = showAll ? await fetchAllProducts() : await fetchProducts()
       setProducts(data)
     } catch (e) {
       setError(e.message)
@@ -19,13 +21,12 @@ export function useProducts() {
 
   useEffect(() => {
     load()
-    // Realtime: refresh products when any product changes
     const channel = supabase
       .channel('products-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, load)
       .subscribe()
     return () => supabase.removeChannel(channel)
-  }, [])
+  }, [showAll])
 
   return { products, loading, error, reload: load }
 }

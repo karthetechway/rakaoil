@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseUrl    = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -9,10 +9,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: true, autoRefreshToken: true },
-  realtime: { params: { eventsPerSecond: 10 } }
+  realtime: { params: { eventsPerSecond: 10 } },
+  global: {
+    // Never log responses in production (prevents leaking PII to browser console)
+    fetch: (...args) => fetch(...args),
+  }
 })
 
-// ── Auth helpers ──────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────
 export const signIn = (email, password) =>
   supabase.auth.signInWithPassword({ email, password })
 
@@ -20,21 +24,56 @@ export const signOut = () => supabase.auth.signOut()
 
 export const getSession = () => supabase.auth.getSession()
 
-// ── Products ─────────────────────────────────────────────────
+// ── Input sanitisation helpers ────────────────────────────────
+// Strip HTML tags and dangerous characters from text fields
+const sanitiseText = (v) =>
+  String(v ?? '').replace(/[<>"'`]/g, '').trim().slice(0, 200)
+
+// Ensure a value is a safe positive number within bounds
+const sanitisePrice = (v) => {
+  const n = parseFloat(v)
+  if (isNaN(n) || n <= 0 || n > 99999) throw new Error('Invalid price value')
+  return Math.round(n * 100) / 100   // cap to 2 decimal places
+}
+
+const sanitiseQty = (v) => {
+  const n = parseInt(v, 10)
+  if (isNaN(n) || n <= 0 || n > 9999) throw new Error('Invalid quantity')
+  return n
+}
+
+const sanitisePhone = (v) => {
+  const digits = String(v ?? '').replace(/\D/g, '').slice(0, 15)
+  if (digits.length < 10) throw new Error('Phone must be at least 10 digits')
+  return digits
+}
+
+// ── Products ──────────────────────────────────────────────────
 export const fetchProducts = async () => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('id, name, name_tamil, category, size, unit, price, active, sort_order')
     .eq('active', true)
     .order('sort_order')
   if (error) throw error
   return data
 }
 
+export const fetchAllProducts = async () => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('id, name, name_tamil, category, size, unit, price, active, sort_order')
+    .order('sort_order')
+  if (error) throw error
+  return data
+}
+
 export const updateProductPrice = async (id, price) => {
+  const safePrice = sanitisePrice(price)
+  if (!id || typeof id !== 'string') throw new Error('Invalid product ID')
   const { error } = await supabase
     .from('products')
-    .update({ price })
+    .update({ price: safePrice })
     .eq('id', id)
   if (error) throw error
 }
@@ -42,77 +81,121 @@ export const updateProductPrice = async (id, price) => {
 // ── Customers ─────────────────────────────────────────────────
 export const findOrCreateCustomer = async ({ name, phone }) => {
   if (!phone) return null
+
+  const safePhone = sanitisePhone(phone)
+  const safeName  = sanitiseText(name || 'Customer')
+
   const { data: existing } = await supabase
     .from('customers')
-    .select('*')
-    .eq('phone', phone)
+    .select('id, name, phone, visit_count, total_spent')
+    .eq('phone', safePhone)
     .maybeSingle()
-  if (existing) return existing
+
+  if (existing) {
+    // Update name if it changed
+    if (safeName && safeName !== existing.name) {
+      await supabase.from('customers').update({ name: safeName }).eq('id', existing.id)
+    }
+    return existing
+  }
 
   const { data, error } = await supabase
     .from('customers')
-    .insert({ name, phone })
-    .select()
+    .insert({ name: safeName, phone: safePhone })
+    .select('id, name, phone, visit_count, total_spent')
     .single()
   if (error) throw error
   return data
 }
 
 export const fetchCustomers = async (search = '') => {
-  let query = supabase.from('customers').select('*').order('created_at', { ascending: false })
-  if (search) query = query.ilike('phone', `%${search}%`)
-  const { data, error } = await query.limit(10)
+  const safeSearch = sanitisePhone(search).slice(0, 15)
+  const { data, error } = await supabase
+    .from('customers')
+    .select('id, name, phone, visit_count, total_spent')
+    .ilike('phone', `%${safeSearch}%`)
+    .order('created_at', { ascending: false })
+    .limit(5)           // reduced from 10 — only need best match
   if (error) throw error
   return data
 }
 
 // ── Bills ─────────────────────────────────────────────────────
 export const saveBill = async ({ items, customer, paymentMode, discount = 0, notes = '' }) => {
-  const subtotal = items.reduce((s, i) => s + i.line_total, 0)
-  const total = Math.max(0, subtotal - discount)
+  // --- Validate all inputs before touching the DB ---
+  if (!Array.isArray(items) || items.length === 0) throw new Error('No items in bill')
 
-  // Find or create customer
+  const ALLOWED_PAYMENT_MODES = ['cash', 'upi', 'card']
+  if (!ALLOWED_PAYMENT_MODES.includes(paymentMode))
+    throw new Error('Invalid payment mode')
+
+  const safeDiscount = Math.max(0, parseFloat(discount) || 0)
+  const safeNotes    = sanitiseText(notes).slice(0, 500)
+
+  // Validate & sanitise each item
+  const safeItems = items.map((i, idx) => {
+    if (!i.product_name) throw new Error(`Item ${idx + 1}: missing product name`)
+    return {
+      product_id:   i.product_id  || null,
+      product_name: sanitiseText(i.product_name),
+      size:         sanitiseText(i.size),
+      quantity:     sanitiseQty(i.quantity),
+      unit_price:   sanitisePrice(i.unit_price),
+      line_total:   sanitisePrice(i.line_total),
+    }
+  })
+
+  // Server-side total recalculation (don't trust client total)
+  const subtotal = safeItems.reduce((s, i) => s + i.unit_price * i.quantity, 0)
+  const total    = Math.max(0, Math.round((subtotal - safeDiscount) * 100) / 100)
+
+  // Customer
   let customerId = null
   if (customer?.phone) {
-    const c = await findOrCreateCustomer(customer)
-    customerId = c?.id ?? null
+    try {
+      const c = await findOrCreateCustomer(customer)
+      customerId = c?.id ?? null
+    } catch (_) {
+      // Non-fatal: save bill without customer link if phone is bad
+    }
   }
 
-  // Insert bill
   const { data: bill, error: billError } = await supabase
     .from('bills')
-    .insert({ customer_id: customerId, subtotal, discount, total, payment_mode: paymentMode, notes })
-    .select()
+    .insert({
+      customer_id:  customerId,
+      subtotal:     Math.round(subtotal * 100) / 100,
+      discount:     safeDiscount,
+      total,
+      payment_mode: paymentMode,
+      notes:        safeNotes,
+    })
+    .select('id, bill_number, created_at')
     .single()
   if (billError) throw billError
 
-  // Insert bill items
-  const { error: itemsError } = await supabase.from('bill_items').insert(
-    items.map(i => ({
-      bill_id: bill.id,
-      product_id: i.product_id || null,
-      product_name: i.product_name,
-      size: i.size,
-      quantity: i.quantity,
-      unit_price: i.unit_price,
-      line_total: i.line_total
-    }))
-  )
+  const { error: itemsError } = await supabase
+    .from('bill_items')
+    .insert(safeItems.map(i => ({ bill_id: bill.id, ...i })))
   if (itemsError) throw itemsError
 
   return bill
 }
 
 export const fetchBills = async ({ date, limit = 50 } = {}) => {
+  const safeLimit = Math.min(Math.max(1, parseInt(limit, 10) || 50), 200)
+
   let query = supabase
     .from('bills')
-    .select(`*, customers(name, phone), bill_items(*)`)
+    .select('id, bill_number, created_at, subtotal, discount, total, payment_mode, status, notes, customers(name, phone), bill_items(*)')
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .limit(safeLimit)
 
   if (date) {
-    const start = new Date(date); start.setHours(0, 0, 0, 0)
-    const end = new Date(date); end.setHours(23, 59, 59, 999)
+    const d = new Date(date)
+    if (isNaN(d.getTime())) throw new Error('Invalid date')
+    const start = new Date(d); start.setHours(0, 0, 0, 0)
+    const end   = new Date(d); end.setHours(23, 59, 59, 999)
     query = query.gte('created_at', start.toISOString()).lte('created_at', end.toISOString())
   }
 
@@ -122,12 +205,14 @@ export const fetchBills = async ({ date, limit = 50 } = {}) => {
 }
 
 export const fetchDailySummary = async (date = new Date()) => {
-  const start = new Date(date); start.setHours(0, 0, 0, 0)
-  const end = new Date(date); end.setHours(23, 59, 59, 999)
+  const d = new Date(date)
+  if (isNaN(d.getTime())) throw new Error('Invalid date')
+  const start = new Date(d); start.setHours(0, 0, 0, 0)
+  const end   = new Date(d); end.setHours(23, 59, 59, 999)
 
   const { data, error } = await supabase
     .from('bills')
-    .select('total, payment_mode, status')
+    .select('total, payment_mode')
     .gte('created_at', start.toISOString())
     .lte('created_at', end.toISOString())
     .eq('status', 'paid')
@@ -135,14 +220,18 @@ export const fetchDailySummary = async (date = new Date()) => {
 
   return {
     totalSales: data.reduce((s, b) => s + Number(b.total), 0),
-    billCount: data.length,
+    billCount:  data.length,
     cash: data.filter(b => b.payment_mode === 'cash').reduce((s, b) => s + Number(b.total), 0),
-    upi: data.filter(b => b.payment_mode === 'upi').reduce((s, b) => s + Number(b.total), 0),
+    upi:  data.filter(b => b.payment_mode === 'upi').reduce((s, b)  => s + Number(b.total), 0),
     card: data.filter(b => b.payment_mode === 'card').reduce((s, b) => s + Number(b.total), 0),
   }
 }
 
 export const cancelBill = async (id) => {
-  const { error } = await supabase.from('bills').update({ status: 'cancelled' }).eq('id', id)
+  if (!id || typeof id !== 'string') throw new Error('Invalid bill ID')
+  const { error } = await supabase
+    .from('bills')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
   if (error) throw error
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AuthProvider, useAuth } from './hooks/useAuth'
+import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { ToastProvider } from './components/Toast'
 import Sidebar from './components/Sidebar'
 import Login from './pages/Login'
@@ -14,9 +14,9 @@ function AppShell() {
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>🫙</div>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🫙</div>
           <div>Loading…</div>
         </div>
       </div>
@@ -25,17 +25,19 @@ function AppShell() {
 
   if (!user) return <Login />
 
-  const PAGES = { billing: Billing, history: History, products: Products, reports: Reports }
+  const PAGES = {
+    billing:  Billing,
+    history:  History,
+    products: Products,
+    reports:  Reports,
+  }
   const PageComponent = PAGES[page] || Billing
 
   return (
     <div className="app-layout">
       <Sidebar active={page} onNav={setPage} />
       <main className="main-content">
-        {page === 'billing'
-          ? <PageComponent />
-          : <PageComponent />
-        }
+        <PageComponent />
       </main>
     </div>
   )
