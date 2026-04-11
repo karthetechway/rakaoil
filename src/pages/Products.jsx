@@ -191,60 +191,49 @@ function ProductsContent() {
         <div key={cat} style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ marginBottom: '.75rem', color: 'var(--brown)' }}>{cat}</h3>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Tamil</th>
-                  <th>Size</th>
-                  <th>Price</th>
-                  <th>Update Price</th>
-                  <th>Billing</th>
-                  <th>Delete</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(p => (
-                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
-                    <td><strong>{p.name}</strong></td>
-                    <td style={{ color: 'var(--text-muted)' }}>{p.name_tamil || '—'}</td>
-                    <td>{p.size}</td>
-                    <td>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>₹{p.price}</span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <input
-                          type="number" min="1" max="99999" step="0.01"
-                          value={editing[p.id] ?? ''}
-                          onChange={e => handlePriceChange(p.id, e.target.value)}
-                          placeholder={p.price}
-                          style={{ width: 80 }}
-                        />
-                        {editing[p.id] && (
-                          <button className="btn btn-primary btn-sm" onClick={() => handlePriceSave(p.id)}>
-                            Save
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td>
+            <div className="admin-list">
+              {items.map(p => (
+                <div key={p.id} className="admin-item" style={{ opacity: p.active ? 1 : 0.6 }}>
+                  <div className="ai-main">
+                    <div>
+                      <div className="pname">{p.name}</div>
+                      <div className="ptamil">{p.name_tamil || '—'}</div>
+                      <div className="badge">{p.size}</div>
+                    </div>
+                    <div className="ai-price">
+                      <span>₹{p.price}</span>
+                    </div>
+                  </div>
+
+                  <div className="ai-actions">
+                    <div className="ai-edit">
+                      <input
+                        type="number" min="1" max="99999" step="0.01"
+                        value={editing[p.id] ?? ''}
+                        onChange={e => handlePriceChange(p.id, e.target.value)}
+                        placeholder={`Edit ₹${p.price}`}
+                      />
+                      {editing[p.id] && (
+                        <button className="btn btn-primary btn-sm" onClick={() => handlePriceSave(p.id)}>
+                          Save
+                        </button>
+                      )}
+                    </div>
+                    <div className="ai-btns">
                       <button
                         className={`btn btn-sm ${p.active ? 'btn-outline' : 'btn-danger'}`}
                         onClick={() => toggleActive(p.id, p.active)}
                       >
                         {p.active ? 'Visible' : 'Hidden'}
                       </button>
-                    </td>
-                    <td>
-                      <button className="btn btn-sm btn-danger" onClick={() => deleteProduct(p.id, `${p.name} ${p.size}`)}>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => deleteProduct(p.id, `${p.name} ${p.size}`)}>
                         Delete
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ))}
