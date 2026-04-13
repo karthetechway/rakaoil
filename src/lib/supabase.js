@@ -262,22 +262,69 @@ export const fetchStockEntries = async (productId = null) => {
   return data
 }
 
-export const addStockEntry = async ({ product_id, quantity, type = 'in', remarks = '' }) => {
+export const addStockEntry = async ({ product_id, quantity, type = 'in', remarks = '', date = null }) => {
+  const payload = {
+    product_id,
+    quantity: parseFloat(quantity),
+    type,
+    remarks: sanitiseText(remarks),
+  }
+  if (date) payload.created_at = date
+
   const { data, error } = await supabase
     .from('stock_entries')
-    .insert({
-      product_id,
-      quantity: parseFloat(quantity),
-      type,
-      remarks: sanitiseText(remarks),
-    })
+    .insert(payload)
     .select()
     .single()
   
   if (error) throw error
+  return data
+}
 
-  // Optional: Update products table if it has a stock column
-  // (We'll assume for now we just log entries)
+export const updateStockEntry = async (id, payload) => {
+  if (payload.quantity) payload.quantity = parseFloat(payload.quantity)
+  if (payload.remarks) payload.remarks = sanitiseText(payload.remarks)
   
+  const { data, error } = await supabase
+    .from('stock_entries')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export const deleteStockEntry = async (id) => {
+  const { error } = await supabase
+    .from('stock_entries')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const fetchProductSales = async (productId) => {
+  const { data, error } = await supabase
+    .from('bill_items')
+    .select('quantity, created_at')
+    .eq('product_id', productId)
+  
+  if (error) throw error
+  return data
+}
+
+export const addProduct = async (product) => {
+  const { data, error } = await supabase
+    .from('products')
+    .insert({
+      ...product,
+      price: parseFloat(product.price),
+      gst_percent: parseFloat(product.gst_percent || 0),
+      active: true
+    })
+    .select()
+    .single()
+  if (error) throw error
   return data
 }
