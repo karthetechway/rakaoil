@@ -1,11 +1,7 @@
 // Opens a tiny popup window, writes receipt HTML into it, and prints it.
 // This completely sidesteps the React DOM / CSS media query conflicts.
 
-const SHOP_NAME = () => import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
-const SHOP_ADDRESS = () => import.meta.env.VITE_SHOP_ADDRESS || ''
-const SHOP_PHONE = () => import.meta.env.VITE_SHOP_PHONE || ''
-const SHOP_EMAIL = () => import.meta.env.VITE_SHOP_EMAIL || ''
-const SHOP_GST = () => import.meta.env.VITE_SHOP_GST || ''
+import { SHOP } from '../constants/shop'
 
 function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 0, total }) {
   const safeTotal = typeof total === 'number' ? total : items.reduce((s, i) => s + i.line_total, 0)
@@ -85,11 +81,11 @@ function buildReceiptHTML({ bill, items = [], customer, paymentMode, discount = 
 </head>
 <body>
   <div class="center" style="margin-bottom:8px">
-    <div class="shop-name">${SHOP_NAME()}</div>
-    ${SHOP_ADDRESS() ? `<div>${SHOP_ADDRESS()}</div>` : ''}
-    ${SHOP_PHONE() ? `<div>Ph: ${SHOP_PHONE()}</div>` : ''}
-    ${SHOP_EMAIL() ? `<div>Email: ${SHOP_EMAIL()}</div>` : ''}
-    ${SHOP_GST() ? `<div>${SHOP_GST()}</div>` : ''}
+    <div class="shop-name">${SHOP.NAME}</div>
+    ${SHOP.ADDRESS ? `<div>${SHOP.ADDRESS}</div>` : ''}
+    ${SHOP.PHONE ? `<div>Ph: ${SHOP.PHONE}</div>` : ''}
+    ${SHOP.EMAIL ? `<div>Email: ${SHOP.EMAIL}</div>` : ''}
+    ${SHOP.GSTIN ? `<div>${SHOP.GSTIN}</div>` : ''}
   </div>
 
   <div class="dash"></div>

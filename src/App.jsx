@@ -7,6 +7,8 @@ import Billing from './pages/Billing'
 import History from './pages/History'
 import Products from './pages/Products'
 import Reports from './pages/Reports'
+import Stock from './pages/Stock'
+import { SHOP } from './constants/shop'
 
 function AppShell() {
   const { user, loading } = useAuth()
@@ -27,6 +29,7 @@ function AppShell() {
 
   const PAGES = {
     billing:  Billing,
+    stock:    Stock,
     history:  History,
     products: Products,
     reports:  Reports,
@@ -37,7 +40,7 @@ function AppShell() {
     <div className="app-layout">
       {/* Mobile Top Branding */}
       <header className="mobile-header mobile-only">
-        <h1>{import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'}</h1>
+        <h1>{SHOP.NAME}</h1>
       </header>
       
       <Sidebar active={page} onNav={setPage} />

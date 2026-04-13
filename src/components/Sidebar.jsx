@@ -1,9 +1,10 @@
 import { signOut } from '../lib/supabase'
 
-const SHOP_NAME = import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
+import { SHOP } from '../constants/shop'
 
 const NAV = [
   { key: 'billing', label: 'New Bill', icon: BillIcon },
+  { key: 'stock', label: 'Stock', icon: StockIcon },
   { key: 'history', label: 'Bill History', icon: HistoryIcon },
   { key: 'products', label: 'Products', icon: ProductIcon },
   { key: 'reports', label: 'Reports', icon: ReportIcon },
@@ -13,7 +14,7 @@ export default function Sidebar({ active, onNav }) {
   return (
     <aside className="sidebar no-print">
       <div className="sidebar-logo">
-        <h1>{SHOP_NAME}</h1>
+        <h1>{SHOP.NAME}</h1>
         <p>Billing Software</p>
       </div>
 
@@ -80,6 +81,14 @@ function ReportIcon() {
     <line x1="18" y1="20" x2="18" y2="10" />
     <line x1="12" y1="20" x2="12" y2="4" />
     <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+}
+function StockIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M21 8l-9-4-9 4v8l9 4 9-4V8z" />
+    <path d="M3 8l9 4 9-4" />
+    <path d="M12 12v10" />
+    <path d="M12 7V3" />
   </svg>
 }
 function LogoutIcon() {

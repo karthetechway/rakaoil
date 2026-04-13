@@ -245,3 +245,39 @@ export const cancelBill = async (id) => {
     .eq('id', id)
   if (error) throw error
 }
+
+// ── Stock ─────────────────────────────────────────────────────
+export const fetchStockEntries = async (productId = null) => {
+  let query = supabase
+    .from('stock_entries')
+    .select('*, products(name, size)')
+    .order('created_at', { ascending: false })
+
+  if (productId) {
+    query = query.eq('product_id', productId)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export const addStockEntry = async ({ product_id, quantity, type = 'in', remarks = '' }) => {
+  const { data, error } = await supabase
+    .from('stock_entries')
+    .insert({
+      product_id,
+      quantity: parseFloat(quantity),
+      type,
+      remarks: sanitiseText(remarks),
+    })
+    .select()
+    .single()
+  
+  if (error) throw error
+
+  // Optional: Update products table if it has a stock column
+  // (We'll assume for now we just log entries)
+  
+  return data
+}

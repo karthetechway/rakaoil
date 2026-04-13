@@ -4,11 +4,9 @@ import { saveBill, fetchCustomers } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { printReceipt } from '../lib/printReceipt'
 
+import { SHOP } from '../constants/shop'
+
 const CATS = ['All', 'Oils', 'Ghee', 'Dal & Sugar']
-const SHOP_NAME = import.meta.env.VITE_SHOP_NAME || 'J Oil Mill'
-const SHOP_ADDRESS = import.meta.env.VITE_SHOP_ADDRESS || ''
-const SHOP_PHONE = import.meta.env.VITE_SHOP_PHONE || ''
-const SHOP_EMAIL = import.meta.env.VITE_SHOP_EMAIL || ''
 
 export default function Billing() {
   const { products, loading } = useProducts()
@@ -174,10 +172,11 @@ export default function Billing() {
     const lines = items.map(i => `  • ${i.product_name} ${i.size} ×${i.quantity} = ₹${i.line_total.toFixed(2)}`).join('\n  --------------------------\n')
     const sub = items.reduce((s, i) => s + i.line_total, 0)
     return [
-      `*${SHOP_NAME}*`,
-      SHOP_ADDRESS || null,
-      SHOP_PHONE ? `Ph: ${SHOP_PHONE}` : null,
-      SHOP_EMAIL ? `Email: ${SHOP_EMAIL}` : null,
+      `*${SHOP.NAME}*`,
+      SHOP.ADDRESS || null,
+      SHOP.PHONE ? `Ph: ${SHOP.PHONE}` : null,
+      SHOP.EMAIL ? `Email: ${SHOP.EMAIL}` : null,
+      SHOP.GSTIN || null,
       '',
       `Bill No : *#${bill.bill_number}*`,
       `Date    : ${new Date().toLocaleDateString('en-IN')}`,
